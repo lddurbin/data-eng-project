@@ -10,7 +10,7 @@ This project is the final requirement for the [Data Engineering Zoomcamp](https:
 
 In this project, we're going to evaluate the popularity of the [plotnine](https://plotnine.org/) Python library over the last two years. *plotnine* is an implementation of a *grammar of graphics* in Python based on ggplot2. I'm an enthuasiastic user of the R programming language on which [ggplot2](https://ggplot2.tidyverse.org/) is built, so it seems fitting for me to evaluate a Python package based on an R package.
 
-The data about *plotnine* download comes from a public dataset hosted on Google BigQuery, which provides download stats on all the packages hosted on PyPI. I got the idea for using this dataset after watching a [End-to-End Data Engineering tutorial on YouTube](https://www.youtube.com/watch?v=3pLKTmdWDXk) which uses this same dataset to analyse how the duckdb Python package has been performing.
+The data about *plotnine* download comes from a public dataset hosted on Google BigQuery, which provides download stats on all the packages hosted on PyPI. I got the idea for using this dataset after watching a [End-to-End Data Engineering tutorial on YouTube](https://www.youtube.com/watch?v=3pLKTmdWDXk) which uses this same dataset to analyse how the duckdb Python package has been performing. I've also found [this blog post](https://www.r-bloggers.com/2023/12/data-engineering-in-r-how-to-build-your-first-data-pipeline-with-r-mage-and-google-cloud-platform-in-under-45-minutes/) quite helpful. And, of course, everything I've learned in the course so far!
 
 I'm going to attempt to build as much of the data pipeline as possible using R, and these instructions were written using Quarto in RStudio.
 
@@ -18,7 +18,7 @@ The GitHub repo for this project can be found [here](https://github.com/lddurbin
 
 ## Getting Started
 
-If you want to follow along, start by running `r renv::restore()` after cloning this repo to make sure you have the same packages as me.
+If you want to follow along, start by running `renv::restore()` after cloning this repo to make sure you have the same packages as me.
 
 Let's load the packages we'll need:
 
@@ -26,13 +26,14 @@ Let's load the packages we'll need:
 #| output: false
 
 library(googleCloudStorageR)
+library(googleComputeEngineR)
 library(janeaustenr)
 library(tidytext)
 library(dplyr)
 ```
 
 
-I'm assuming that you have a Google Cloud account, you've created a new project, and you've created a service account with the permissions described in this video. I also assume you've downloaded your key as a JSON file, and you're pointing to that file in a .Renviron file in this project as follows:
+I'm assuming that you have a Google Cloud account, you've created a new project, and you've created a service account with the permissions described in [this video](https://youtu.be/Y2ux7gq3Z0o&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=12). I also assume you've downloaded your key as a JSON file, and you're pointing to that file in a .Renviron file in this project as follows:
 
 ```{r service_key}
 #| eval: false
@@ -74,17 +75,18 @@ bucket_name
 
 ```
 
-Notice that I'm calling an environment variable again, which is my GCP project ID that is stored in the .Renviron file we created earlier. You can see how I set that at the top of the following code chunk, followed by the call to GCP:
+Now we can create the bucket. Notice that I'm calling a couple of environment variables again below - my GCP project ID and my the zone where I want to host the bucket, both of which are stored in the .Renviron file we created earlier. You can see how I set these at the top of the following code chunk, followed by the call to GCP:
 
 ```{r create_bucket}
 #| eval: false
 
-Sys.setenv("PROJECT_ID", "myprojectid-1234")
+Sys.setenv("GCS_DEFAULT_PROJECT_ID", "your-projectid-1234")
+Sys.setenv("GCS_DEFAULT_LOCATION", "your_nearest_location")
 
 gcs_create_bucket(
   name = bucket_name,
-  projectId = Sys.getenv("PROJECT_ID"),
-  location = "US",
+  projectId = Sys.getenv("GCS_DEFAULT_PROJECT_ID"),
+  location = Sys.getenv("GCS_DEFAULT_LOCATION"),
   storageClass = c("MULTI_REGIONAL"),
   predefinedAcl = c("projectPrivate"),
   predefinedDefaultObjectAcl = c("bucketOwnerFullControl"),
@@ -95,4 +97,21 @@ gcs_create_bucket(
 
 If all went well, you should see some text in the console which will confirm that the bucket creation was successful.
 
+Next up, let's set up some environment variables for Google Compute Engine, then we'll use the googleComputeEngineR package to create a VM as follows:
+
+```{r}
+#| eval: false
+
+Sys.setenv("GCE_AUTH_FILE", "/path/to/key-file-name.json")
+Sys.setenv("GCE_DEFAULT_PROJECT_ID", "your-projectid-1234")
+Sys.setenv("GCE_DEFAULT_ZONE", "your_nearest_zone")
+
+
+vm <- gce_vm(name = "test-vm", predefined_type = "f1-micro", 
+             image_project = "ubuntu-os-cloud", 
+             image_family = "ubuntu-2310-amd64")
+
+## VM metadata
+vm
+```
 
