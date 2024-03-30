@@ -1,20 +1,34 @@
 ---
 title: "Data Pipeline"
 author: "Lee Durbin"
-format: html
+format:
+  html:
+    toc: true
 ---
 
 ## Problem Description
 
 This project is the final requirement for the [Data Engineering Zoomcamp](https://github.com/DataTalksClub/data-engineering-zoomcamp).
 
-In this project, we're going to evaluate the popularity of the [plotnine](https://plotnine.org/) Python library over the last two years. *plotnine* is an implementation of a *grammar of graphics* in Python based on ggplot2. I'm an enthuasiastic user of the R programming language on which [ggplot2](https://ggplot2.tidyverse.org/) is built, so it seems fitting for me to evaluate a Python package based on an R package.
+In this project, we're going to evaluate the popularity of two Python libraries over the last year: [Polars](https://pola.rs/) and [pandas](https://pandas.pydata.org/).
 
-The data about *plotnine* download comes from a public dataset hosted on Google BigQuery, which provides download stats on all the packages hosted on PyPI. I got the idea for using this dataset after watching a [End-to-End Data Engineering tutorial on YouTube](https://www.youtube.com/watch?v=3pLKTmdWDXk) which uses this same dataset to analyse how the duckdb Python package has been performing. I've also found [this blog post](https://www.r-bloggers.com/2023/12/data-engineering-in-r-how-to-build-your-first-data-pipeline-with-r-mage-and-google-cloud-platform-in-under-45-minutes/) quite helpful. And, of course, everything I've learned in the course so far!
+*Polars* is a blazingly fast DataFrame library for manipulating structured data. The core is written in Rust, and available for Python, R and NodeJS. For this project, we're going to evaluate the popularity of its implementation in Python.
 
-I'm going to attempt to build as much of the data pipeline as possible using R, and these instructions were written using Quarto in RStudio.
+*pandas* is a fast, powerful, flexible and easy to use open source data analysis and manipulation tool, built on top of the Python programming language. 
+
+*pandas* was used in the Data Engineering Zoomcamp, but I found its ergonomics to be sub-optimal compared to R's [dplyr](https://dplyr.tidyverse.org/) package. I recently read an excellent [blogpost by Emily Riederer](https://www.emilyriederer.com/post/py-rgo/), in which she recommends *Polars* as it "may feel more natural and less error-prone to R users for may reasons".
+
+Polars is a relative newcomer, having been founded as an open source project in 2020, whereas pandas has been around for about as long as dplyr. I was curious how *Polars* has been performing over the last year, and how its growth compares to *pandas*.
+
+The data about these libraries comes from a public dataset hosted on Google BigQuery, which provides download stats on all the packages hosted on [PyPI](https://pypi.org/). I got the idea for using this dataset after watching a [End-to-End Data Engineering tutorial on YouTube](https://www.youtube.com/watch?v=3pLKTmdWDXk) which uses this same dataset to analyse how the duckdb Python package has been performing. I've also found [this blog post](https://www.r-bloggers.com/2023/12/data-engineering-in-r-how-to-build-your-first-data-pipeline-with-r-mage-and-google-cloud-platform-in-under-45-minutes/) quite helpful. And, of course, everything I've learned in the course so far!
 
 The GitHub repo for this project can be found [here](https://github.com/lddurbin/data-eng-project).
+
+
+## Limitations
+
+Over the last couple of months I've had COVID and been challenged by my mental health. This has made it difficult to commit as much to the course as I would have liked to, but I'm still determined to complete this assignment on time. To achieve this whilst still putting my wellbeing first, I'm going to use R to build as much of the data pipeline as possible. Even though the course uses a variety of tools and it would be better to utilise them for this assignment, I have been writing R code most days for the past 4 years so I'm more likely to complete this assignment in time (and with greater ease) by using R. If I have a second shot at this, I will re-build the pipeline using Mage and dbt, and use Terraform for the IaC section.
+
 
 ## Getting Started
 
@@ -24,7 +38,7 @@ I'm assuming that you have a Google Cloud account, you've created a new project,
 
 There's actually a bunch of environment variables we'll need to set up for this pipeline to run. The `usethis` package makes it easy to edit .Renviron files - just call `usethis::edit_r_environ(scope="project")` and it will take you to a newly-generated .Renviron file. Populate it with something similar to this:
 
-```{r service_key}
+```{r environment_variables}
 #| eval: false
 
 GCS_AUTH_FILE = "path/to/creds.json"
@@ -36,9 +50,9 @@ GCE_DEFAULT_PROJECT_ID = "<your-project-id>"
 GCE_DEFAULT_ZONE = "<nearest-zone>"
 ```
 
-Now let's load the packages we'll need, and the ones that will access the Google API will read the newly-created .Renviron file to retrieve the settings:
+Now let's load the packages (the ones that will access the Google API will read the newly-created .Renviron file):
 
-```{r}
+```{r load_libraries}
 #| output: false
 library(usethis)
 library(googleCloudStorageR)
@@ -54,12 +68,11 @@ The first set of variables above will configure the settings for accessing Googl
 
 ## Infrastructure as Code
 
-Let's create a new bucket where we'll store our data. We'll need to make we're using a unique name for the new bucket, so to have some fun let's grab a couple of words from the works of Jane Austen, following along with [Julie Silge's instructions](https://github.com/juliasilge/tidytext) for her tidytext package:
+Let's create a new bucket where we'll store our data. We'll need to make we're using a unique name for the new bucket, so to have some fun let's grab a couple of words from the works of Jane Austen. [Julie Silge's instructions](https://github.com/juliasilge/tidytext) for her tidytext package really helped me here:
 
 ```{r austen_words}
 
 austen_words <- austen_books() |> 
-  mutate(line = row_number(), .by = "book") |> 
   unnest_tokens(word, text) |> 
   anti_join(get_stopwords())
 
@@ -76,10 +89,9 @@ bucket_name
 
 ```
 
-Now we can create the bucket. Notice that I'm calling a couple of environment variables again below - my GCP project ID and my the zone where I want to host the bucket, both of which are stored in the .Renviron file we created earlier.
+Now we can create the bucket. Notice that I'm calling a couple of environment variables below - my GCP project ID and my the zone where I want to host the bucket, both of which are stored in the .Renviron file we created earlier.
 
 ```{r create_bucket}
-#| eval: false
 
 gcs_create_bucket(
   name = bucket_name,
@@ -118,49 +130,64 @@ vm
 
 Ideally the following steps would be handled in Mage, but in the interest of time we're just going to lay it out in this Quarto doc. If time permits, we'll migrate this code into Mage so that the process can be orchestrated.
 
-We're going to query the data about plotnine from the BigQuery public dataset called *pypi*, and then save this to our GCP bucket. First we'll need to point the `bigrquery` package to our credentials in the JSON file via the environment variable in .Renviron:
+We're going to query the data about pandas and Polars from the BigQuery public dataset called *pypi*, and then save this to our GCP bucket as CSV files. First we'll need to point the [bigrquery](https://bigrquery.r-dbi.org/index.html) package to our credentials in the JSON file via the environment variable in .Renviron:
 
 ```{r auth_bigrquery}
 bigrquery::bq_auth(path = Sys.getenv("GCS_AUTH_FILE"))
 ```
 
-And now we can get the PyPI data about plotnine from yesterday, limiting the columns to the timestamp, country_code, and url:
+And now we can query the PyPI data to get the number of downloads of pandas and Polars from the last year:
 
 ```{r get_bigquery_data}
-#| eval: false
 
-yesterday <- Sys.Date() -1
-data_src <- "`bigquery-public-data.pypi.file_downloads`"
+library(DBI)
 
-sql <- paste0("SELECT timestamp, country_code, url FROM ",
-              data_src,
-              " WHERE TIMESTAMP_TRUNC(timestamp, DAY) = TIMESTAMP(\"",
-              yesterday,
-              "\") AND project = 'plotnine'")
+query_tbl <- function(data, lib_name) {
+  last_year <- Sys.Date() - 365
+  
+  lib_stats <- data |> 
+  filter(
+    project == lib_name,
+    as.Date(timestamp) >= last_year
+  ) |> 
+  mutate(date = as.Date(timestamp)) |> 
+  count(date) |> 
+  collect()
+  
+  return(lib_stats)
+}
 
-tb <- bq_project_query(Sys.getenv("GCS_DEFAULT_PROJECT_ID"), sql)
+con <- dbConnect(
+  bigrquery::bigquery(),
+  project = "bigquery-public-data",
+  dataset = "pypi",
+  billing = Sys.getenv("GCS_DEFAULT_PROJECT_ID")
+)
 
-plotnine_stats <- bq_table_download(tb)
+downloads <- tbl(con, "file_downloads")
 
-bq_table_download(tb, n_max = 10)
+polars_stats <- query_tbl(downloads, "polars")
+pandas_stats <- query_tbl(downloads, "pandas")
+
+dbDisconnect(con)
 ```
 
-Now let's upload this data as a CSV file into our newly-created GCP bucket, and we'll use the date of the data to determine the filename for it:
+Now let's upload this data as CSV files into our newly-created GCP bucket, and we'll use the date of the data to determine the filename for it:
 
 ```{r upload_to_gcs}
-#| eval: false
 
-filename <- paste0("plotnine-stats-", as.character(yesterday))
+pandas_filename <- paste0("pandas-stats-", min(pandas_stats$date), "_", 
+                          max(pandas_stats$date))
 
-gcs_upload(plotnine_stats, name = filename)
+polars_filename <- paste0("polars-stats-", min(polars_stats$date), "_", 
+                          max(polars_stats$date))
+
+gcs_upload(pandas_stats, name = pandas_filename)
+gcs_upload(polars_stats, name = polars_filename)
 ```
 
-Let's list all the objects in our bucket:
 
-```{r get_gcs_objects}
-objects <- gcs_list_objects(detail = "full")
-```
-
+## Data Warehouse
 
 Now let's create a BigQuery dataset if we don't already have it:
 
@@ -173,19 +200,39 @@ if(dataset_exists == FALSE) {
 }
 ```
 
-Now let's upload our data from GCS into a table within this BQ dataset, assuming the table doesn't already exist:
+Let's combine our dataframes into one, making sure we tag each first:
+
+```{r combine_dataframes}
+pandas_tagged <- pandas_stats |> 
+  mutate(library = "pandas")
+
+polars_tagged <- polars_stats |> 
+  mutate(library = "polars")
+
+python_lib_stats <- bind_rows(pandas_tagged, polars_tagged)
+
+```
+
+
+Next, let's create a BigQuery table if we don't already have it:
 
 ```{r bq_table}
-plotnine_tbl <- bq_table(pypi, "plotnine")
-fields <- as_bq_fields(plotnine_stats)
-table_exists <- bq_table_exists(plotnine_tbl)
+stats_tbl <- bq_table(pypi, "python_lib_stats")
+table_exists <- bq_table_exists(stats_tbl)
 
 if(table_exists == FALSE) {
-  bq_table_create(plotnine_tbl, fields)
+  fields <- as_bq_fields(python_lib_stats)
+  
+  bq_table_create(stats_tbl, fields)
 }
+```
 
-bq_table <- bq_table(project, dataset, table = NULL, type = "TABLE")
-uri <- paste0("gs://", gcs_get_global_bucket(), "/*")
-bq_table_load(plotnine_tbl, uri)
+Now we can load this into our BigQuery table:
+
+```{r bq_upload}
+bq_table <- bq_table(Sys.getenv("GCS_DEFAULT_PROJECT_ID"), "pypi", 
+                     "python_lib_stats", type = "TABLE")
+
+bq_table_upload(bq_table, python_lib_stats)
 ```
 
