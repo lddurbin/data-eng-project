@@ -115,10 +115,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Let’s load the packages we’ll need:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(googleCloudStorageR)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(googleComputeEngineR)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janeaustenr)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidytext)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janeaustenr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidytext)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(googleComputeEngineR)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bigrquery)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>I’m assuming that you have a Google Cloud account, you’ve created a new project, and you’ve created a service account with the permissions described in <a href="https://youtu.be/Y2ux7gq3Z0o&amp;list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&amp;index=12">this video</a>. I also assume you’ve downloaded your key as a JSON file, and you’re pointing to that file in a .Renviron file in this project as follows:</p>
 <div class="cell">
@@ -152,18 +153,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>bucket_name</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "requester_lizzy9756"</code></pre>
+<pre><code>[1] "19_perrys8378"</code></pre>
 </div>
 </div>
 <p>Now we can create the bucket. Notice that I’m calling a couple of environment variables again below - my GCP project ID and my the zone where I want to host the bucket, both of which are stored in the .Renviron file we created earlier. You can see how I set these at the top of the following code chunk, followed by the call to GCP:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="st">"GCE_DEFAULT_PROJECT_ID"</span>, <span class="st">"your-projectid-1234"</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="st">"GCE_DEFAULT_ZONE"</span>, <span class="st">"your_nearest_zone"</span>)</span>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="st">"GCS_DEFAULT_PROJECT_ID"</span>, <span class="st">"your-projectid-1234"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="st">"GCS_DEFAULT_LOCATION"</span>, <span class="st">"your_nearest_location"</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_create_bucket</span>(</span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">name =</span> bucket_name,</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">projectId =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCE_DEFAULT_PROJECT_ID"</span>),</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">location =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCE_DEFAULT_ZONE"</span>),</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">projectId =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_PROJECT_ID"</span>),</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">location =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_LOCATION"</span>),</span>
 <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">storageClass =</span> <span class="fu">c</span>(<span class="st">"MULTI_REGIONAL"</span>),</span>
 <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">predefinedAcl =</span> <span class="fu">c</span>(<span class="st">"projectPrivate"</span>),</span>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">predefinedDefaultObjectAcl =</span> <span class="fu">c</span>(<span class="st">"bucketOwnerFullControl"</span>),</span>
@@ -171,11 +172,57 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>If all went well, you should see some text in the console which will confirm that the bucket creation was successful.</p>
+<p>Next up, let’s set up some environment variables for Google Compute Engine, then we’ll use the googleComputeEngineR package to create a VM as follows:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>vm <span class="ot">&lt;-</span> <span class="fu">gce_vm</span>(<span class="at">name =</span> <span class="st">"test-vm"</span>)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="do">## VM metadata</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>vm</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="st">"GCE_AUTH_FILE"</span>, <span class="st">"/path/to/key-file-name.json"</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="st">"GCE_DEFAULT_PROJECT_ID"</span>, <span class="st">"your-projectid-1234"</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="st">"GCE_DEFAULT_ZONE"</span>, <span class="st">"your_nearest_zone"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>vm <span class="ot">&lt;-</span> <span class="fu">gce_vm</span>(<span class="at">name =</span> <span class="st">"test-vm"</span>, <span class="at">predefined_type =</span> <span class="st">"f1-micro"</span>, </span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>             <span class="at">image_project =</span> <span class="st">"ubuntu-os-cloud"</span>, </span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>             <span class="at">image_family =</span> <span class="st">"ubuntu-2310-amd64"</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="do">## VM metadata</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>vm</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="data-ingestion" class="level2">
+<h2 class="anchored" data-anchor-id="data-ingestion">Data Ingestion</h2>
+<p>Ideally the following steps would be handled in Mage, but in the interest of time we’re just going to lay it out in this Quarto doc. If time permits, we’ll migrate this code into Mage so that the process can be orchestrated.</p>
+<p>We’re going to query the data about plotnine from the BigQuery public dataset called <em>pypi</em>, and then save this to our GCP bucket. First we’ll need to point the <code>bigrquery</code> package to our credentials in the JSON file via the environment variable in .Renviron:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>bigrquery<span class="sc">::</span><span class="fu">bq_auth</span>(<span class="at">path =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCS_AUTH_FILE"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>And now we can get the PyPI data about plotnine from yesterday:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>today <span class="ot">&lt;-</span> <span class="fu">Sys.Date</span>() <span class="sc">-</span><span class="dv">1</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>data_src <span class="ot">&lt;-</span> <span class="st">"`bigquery-public-data.pypi.file_downloads`"</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>sql <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"SELECT * FROM "</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>              data_src,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>              <span class="st">" WHERE TIMESTAMP_TRUNC(timestamp, DAY) = TIMESTAMP(</span><span class="sc">\"</span><span class="st">"</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>              today,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>              <span class="st">"</span><span class="sc">\"</span><span class="st">) AND project = 'plotnine'"</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>tb <span class="ot">&lt;-</span> <span class="fu">bq_project_query</span>(<span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_PROJECT_ID"</span>), sql)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="fu">bq_table_download</span>(tb, <span class="at">n_max =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 8
+   timestamp           country_code url        project file         details     
+   &lt;dttm&gt;              &lt;chr&gt;        &lt;chr&gt;      &lt;chr&gt;   &lt;list&gt;       &lt;list&gt;      
+ 1 2024-03-29 23:56:55 US           /packages… plotni… &lt;named list&gt; &lt;named list&gt;
+ 2 2024-03-29 23:56:36 US           /packages… plotni… &lt;named list&gt; &lt;named list&gt;
+ 3 2024-03-29 23:59:23 US           /packages… plotni… &lt;named list&gt; &lt;named list&gt;
+ 4 2024-03-29 23:58:53 US           /packages… plotni… &lt;named list&gt; &lt;named list&gt;
+ 5 2024-03-29 23:59:23 US           /packages… plotni… &lt;named list&gt; &lt;named list&gt;
+ 6 2024-03-29 23:59:26 US           /packages… plotni… &lt;named list&gt; &lt;named list&gt;
+ 7 2024-03-29 23:58:53 US           /packages… plotni… &lt;named list&gt; &lt;named list&gt;
+ 8 2024-03-29 23:59:25 US           /packages… plotni… &lt;named list&gt; &lt;named list&gt;
+ 9 2024-03-29 23:59:28 US           /packages… plotni… &lt;named list&gt; &lt;named list&gt;
+10 2024-03-29 23:59:24 US           /packages… plotni… &lt;named list&gt; &lt;named list&gt;
+# ℹ 2 more variables: tls_protocol &lt;chr&gt;, tls_cipher &lt;chr&gt;</code></pre>
+</div>
 </div>
 </section>
 

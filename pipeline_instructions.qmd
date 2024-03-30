@@ -26,10 +26,11 @@ Let's load the packages we'll need:
 #| output: false
 
 library(googleCloudStorageR)
-library(googleComputeEngineR)
 library(janeaustenr)
 library(tidytext)
 library(dplyr)
+library(googleComputeEngineR)
+library(bigrquery)
 ```
 
 
@@ -78,10 +79,8 @@ bucket_name
 Now we can create the bucket. Notice that I'm calling a couple of environment variables again below - my GCP project ID and my the zone where I want to host the bucket, both of which are stored in the .Renviron file we created earlier. You can see how I set these at the top of the following code chunk, followed by the call to GCP:
 
 ```{r create_bucket}
-#| eval: false
-
-Sys.setenv("GCS_DEFAULT_PROJECT_ID", "your-projectid-1234")
-Sys.setenv("GCS_DEFAULT_LOCATION", "your_nearest_location")
+# Sys.setenv("GCS_DEFAULT_PROJECT_ID", "your-projectid-1234")
+# Sys.setenv("GCS_DEFAULT_LOCATION", "your_nearest_location")
 
 gcs_create_bucket(
   name = bucket_name,
@@ -97,14 +96,20 @@ gcs_create_bucket(
 
 If all went well, you should see some text in the console which will confirm that the bucket creation was successful.
 
+We'll now set this bucket name as the default, to use again later when we're uploading to it:
+
+```{r gcs_default_bucket}
+gcs_global_bucket(bucket_name)
+```
+
 Next up, let's set up some environment variables for Google Compute Engine, then we'll use the googleComputeEngineR package to create a VM as follows:
 
 ```{r}
 #| eval: false
 
-Sys.setenv("GCE_AUTH_FILE", "/path/to/key-file-name.json")
-Sys.setenv("GCE_DEFAULT_PROJECT_ID", "your-projectid-1234")
-Sys.setenv("GCE_DEFAULT_ZONE", "your_nearest_zone")
+# Sys.setenv("GCE_AUTH_FILE", "/path/to/key-file-name.json")
+# Sys.setenv("GCE_DEFAULT_PROJECT_ID", "your-projectid-1234")
+# Sys.setenv("GCE_DEFAULT_ZONE", "your_nearest_zone")
 
 
 vm <- gce_vm(name = "test-vm", predefined_type = "f1-micro", 
@@ -113,5 +118,42 @@ vm <- gce_vm(name = "test-vm", predefined_type = "f1-micro",
 
 ## VM metadata
 vm
+```
+
+## Data Ingestion
+
+Ideally the following steps would be handled in Mage, but in the interest of time we're just going to lay it out in this Quarto doc. If time permits, we'll migrate this code into Mage so that the process can be orchestrated.
+
+We're going to query the data about plotnine from the BigQuery public dataset called *pypi*, and then save this to our GCP bucket. First we'll need to point the `bigrquery` package to our credentials in the JSON file via the environment variable in .Renviron:
+
+```{r auth_bigrquery}
+bigrquery::bq_auth(path = Sys.getenv("GCS_AUTH_FILE"))
+```
+
+And now we can get the PyPI data about plotnine from yesterday, limiting the columns to the timestamp, country_code, and url:
+
+```{r get_bigquery_data}
+yesterday <- Sys.Date() -1
+data_src <- "`bigquery-public-data.pypi.file_downloads`"
+
+sql <- paste0("SELECT timestamp, country_code, url FROM ",
+              data_src,
+              " WHERE TIMESTAMP_TRUNC(timestamp, DAY) = TIMESTAMP(\"",
+              yesterday,
+              "\") AND project = 'plotnine'")
+
+tb <- bq_project_query(Sys.getenv("GCS_DEFAULT_PROJECT_ID"), sql)
+
+plotnine_stats <- bq_table_download(tb)
+
+bq_table_download(tb, n_max = 10)
+```
+
+Now let's upload this data as a CSV file into our newly-created GCP bucket, and we'll use the date of the data to determine the filename for it:
+
+```{r upload_to_gcs}
+filename <- paste0("plotnine-stats-", as.character(yesterday))
+
+gcs_upload(plotnine_stats, name = filename)
 ```
 
