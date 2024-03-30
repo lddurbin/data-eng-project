@@ -101,6 +101,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
+<section id="problem-description" class="level2">
+<h2 class="anchored" data-anchor-id="problem-description">Problem Description</h2>
+<p>This project is the final requirement for the <a href="https://github.com/DataTalksClub/data-engineering-zoomcamp">Data Engineering Zoomcamp</a>.</p>
+<p>In this project, we’re going to evaluate the popularity of the <a href="https://plotnine.org/">plotnine</a> Python library over the last two years. <em>plotnine</em> is an implementation of a <em>grammar of graphics</em> in Python based on ggplot2. I’m an enthuasiastic user of the R programming language on which <a href="https://ggplot2.tidyverse.org/">ggplot2</a> is built, so it seems fitting for me to evaluate a Python package based on an R package.</p>
+<p>The data about <em>plotnine</em> download comes from a public dataset hosted on Google BigQuery, which provides download stats on all the packages hosted on PyPI. I got the idea for using this dataset after watching a <a href="https://www.youtube.com/watch?v=3pLKTmdWDXk">End-to-End Data Engineering tutorial on YouTube</a> which uses this same dataset to analyse how the duckdb Python package has been performing.</p>
+<p>I’m going to attempt to build as much of the data pipeline as possible using R, and these instructions were written using Quarto in RStudio.</p>
+<p>The GitHub repo for this project can be found <a href="https://github.com/lddurbin/data-eng-project">here</a>.</p>
+</section>
 <section id="getting-started" class="level2">
 <h2 class="anchored" data-anchor-id="getting-started">Getting Started</h2>
 <p>If you want to follow along, start by running after cloning this repo to make sure you have the same packages as me.</p>
@@ -115,7 +123,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>GCS_AUTH_FILE <span class="ot">=</span> <span class="st">"/path/to/key-file-name.json"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let’s configure the settings for our Google Project. We’ll use the <a href="https://code.markedmondson.me/googleCloudStorageR/articles/googleCloudStorageR.html">googleCloudStorageR</a> package for this, which will guide us through the process. Assuming you have the .Renviron file popled as described above, just run the following:</p>
+<p>Let’s configure the settings for our Google Project. We’ll use the <a href="https://code.markedmondson.me/googleCloudStorageR/articles/googleCloudStorageR.html">googleCloudStorageR</a> package for this, which will guide us through the process. The Data Engineering Zoomcamp uses Terraform, but in the interests of time I’ve opted for a R package instead to achieve the same ends.</p>
+<p>Assuming you have the .Renviron file populated as described above, just run the following:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_setup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -138,21 +147,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>() <span class="sc">|&gt;</span> </span>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sample</span>(<span class="dv">2</span>)</span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>bucket_numbers <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">runif</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">10000</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>bucket_numbers <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">runif</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">10000</span>))</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>bucket_name <span class="ot">&lt;-</span> <span class="fu">paste0</span>(bucket_words[<span class="dv">1</span>], <span class="st">"_"</span>, bucket_words[<span class="dv">2</span>], bucket_numbers)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>bucket_name</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "seasons_toward4270"</code></pre>
+</div>
 </div>
 <p>Notice that I’m calling an environment variable again, which is my GCP project ID that is stored in the .Renviron file we created earlier. You can see how I set that at the top of the following code chunk, followed by the call to GCP:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="st">"PROJECT_ID"</span>, <span class="st">"myprojectid-1234"</span>)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_create_bucket</span>(</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">name =</span> <span class="fu">paste0</span>(bucket_words[<span class="dv">1</span>], <span class="st">"_"</span>, bucket_words[<span class="dv">2</span>], bucket_numbers),</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">projectId =</span> <span class="fu">Sys.getenv</span>(<span class="st">"PROJECT_ID"</span>),</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">location =</span> <span class="st">"US"</span>,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">storageClass =</span> <span class="fu">c</span>(<span class="st">"MULTI_REGIONAL"</span>),</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">predefinedAcl =</span> <span class="fu">c</span>(<span class="st">"projectPrivate"</span>),</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">predefinedDefaultObjectAcl =</span> <span class="fu">c</span>(<span class="st">"bucketOwnerFullControl"</span>),</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">projection =</span> <span class="fu">c</span>(<span class="st">"noAcl"</span>)</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="st">"PROJECT_ID"</span>, <span class="st">"myprojectid-1234"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_create_bucket</span>(</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">name =</span> bucket_name,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">projectId =</span> <span class="fu">Sys.getenv</span>(<span class="st">"PROJECT_ID"</span>),</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">location =</span> <span class="st">"US"</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">storageClass =</span> <span class="fu">c</span>(<span class="st">"MULTI_REGIONAL"</span>),</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">predefinedAcl =</span> <span class="fu">c</span>(<span class="st">"projectPrivate"</span>),</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">predefinedDefaultObjectAcl =</span> <span class="fu">c</span>(<span class="st">"bucketOwnerFullControl"</span>),</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">projection =</span> <span class="fu">c</span>(<span class="st">"noAcl"</span>)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>If all went well, you should see some text in the console which will confirm that the bucket creation was successful.</p>
 </section>

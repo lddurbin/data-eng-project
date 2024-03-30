@@ -4,6 +4,18 @@ author: "Lee Durbin"
 format: html
 ---
 
+## Problem Description
+
+This project is the final requirement for the [Data Engineering Zoomcamp](https://github.com/DataTalksClub/data-engineering-zoomcamp).
+
+In this project, we're going to evaluate the popularity of the [plotnine](https://plotnine.org/) Python library over the last two years. *plotnine* is an implementation of a *grammar of graphics* in Python based on ggplot2. I'm an enthuasiastic user of the R programming language on which [ggplot2](https://ggplot2.tidyverse.org/) is built, so it seems fitting for me to evaluate a Python package based on an R package.
+
+The data about *plotnine* download comes from a public dataset hosted on Google BigQuery, which provides download stats on all the packages hosted on PyPI. I got the idea for using this dataset after watching a [End-to-End Data Engineering tutorial on YouTube](https://www.youtube.com/watch?v=3pLKTmdWDXk) which uses this same dataset to analyse how the duckdb Python package has been performing.
+
+I'm going to attempt to build as much of the data pipeline as possible using R, and these instructions were written using Quarto in RStudio.
+
+The GitHub repo for this project can be found [here](https://github.com/lddurbin/data-eng-project).
+
 ## Getting Started
 
 If you want to follow along, start by running `r renv::restore()` after cloning this repo to make sure you have the same packages as me.
@@ -28,7 +40,9 @@ I'm assuming that you have a Google Cloud account, you've created a new project,
 GCS_AUTH_FILE = "/path/to/key-file-name.json"
 ```
 
-Let's configure the settings for our Google Project. We'll use the [googleCloudStorageR](https://code.markedmondson.me/googleCloudStorageR/articles/googleCloudStorageR.html) package for this, which will guide us through the process. Assuming you have the .Renviron file popled as described above, just run the following:
+Let's configure the settings for our Google Project. We'll use the [googleCloudStorageR](https://code.markedmondson.me/googleCloudStorageR/articles/googleCloudStorageR.html) package for this, which will guide us through the process. The Data Engineering Zoomcamp uses Terraform, but in the interests of time I've opted for a R package instead to achieve the same ends.
+
+Assuming you have the .Renviron file populated as described above, just run the following:
 
 ```{r gcp_setup}
 #| eval: false
@@ -47,14 +61,16 @@ austen_words <- austen_books() |>
   unnest_tokens(word, text) |> 
   anti_join(get_stopwords())
 
-set.seed(10)
-
 bucket_words <- austen_words |> 
   pull(word) |> 
   unique() |> 
   sample(2)
 
 bucket_numbers <- round(runif(1, 1, 10000))
+
+bucket_name <- paste0(bucket_words[1], "_", bucket_words[2], bucket_numbers)
+
+bucket_name
 
 ```
 
@@ -66,7 +82,7 @@ Notice that I'm calling an environment variable again, which is my GCP project I
 Sys.setenv("PROJECT_ID", "myprojectid-1234")
 
 gcs_create_bucket(
-  name = paste0(bucket_words[1], "_", bucket_words[2], bucket_numbers),
+  name = bucket_name,
   projectId = Sys.getenv("PROJECT_ID"),
   location = "US",
   storageClass = c("MULTI_REGIONAL"),
@@ -78,3 +94,5 @@ gcs_create_bucket(
 ```
 
 If all went well, you should see some text in the console which will confirm that the bucket creation was successful.
+
+
