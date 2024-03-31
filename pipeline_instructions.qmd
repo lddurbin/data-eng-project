@@ -259,18 +259,24 @@ And now we'll use `ggplot2` to visualise this. We'll explore the data across sev
 
 ```{r downloads_by_lib}
 total_downloads <- downloads |> 
-  summarise(total_downloads = sum(n), .by = "library")
+  summarise(total_downloads = sum(n), .by = "library") 
 ```
 
+Now we can create the visual from this data:
+
 ```{r total_downloads_chart}
-ggplot(total_downloads) +
-  geom_col(aes(x = library, y = total_downloads)) +
+ggplot(total_downloads, aes(x = library, y = total_downloads)) +
+  geom_col() +
+  geom_text(aes(label = scales::label_number(
+    accuracy = 0.1, scale_cut = cut_short_scale()
+    )(total_downloads)), vjust = -0.6) +
   theme_minimal() +
   theme(
     axis.title = element_blank(),
     axis.text.y = element_blank(),
     axis.text.x = element_text(size=14),
     panel.grid = element_blank()
-  )
+  ) +
+  labs(title = "Total downloads for pandas and Polars over the last year")
 ```
 
