@@ -61,6 +61,7 @@ library(tidytext)
 library(dplyr)
 library(googleComputeEngineR)
 library(bigrquery)
+library(ggplot2)
 ```
 
 The first set of variables above will configure the settings for accessing Google Cloud Storage, and we're using the [googleCloudStorageR](https://code.markedmondson.me/googleCloudStorageR/articles/googleCloudStorageR.html) package for this. The Data Engineering Zoomcamp uses Terraform, but in the interests of time I've opted for a R package instead to achieve the same ends.
@@ -234,5 +235,42 @@ bq_table <- bq_table(Sys.getenv("GCS_DEFAULT_PROJECT_ID"), "pypi",
                      "python_lib_stats", type = "TABLE")
 
 bq_table_upload(bq_table, python_lib_stats)
+```
+
+
+## Dashboard
+
+For the final step in this process, let's create a dashboard to compare the popularity of these two Python libraries. Step one is to grab the data we've uploaded to BigQuery:
+
+```{r get_downloads_data}
+con <- dbConnect(
+  bigrquery::bigquery(),
+  project = Sys.getenv("GCS_DEFAULT_PROJECT_ID"),
+  dataset = "pypi",
+  billing = Sys.getenv("GCS_DEFAULT_PROJECT_ID")
+)
+
+downloads <- tbl(con, "python_lib_stats") |> collect()
+
+dbDisconnect(con)
+```
+
+And now we'll use `ggplot2` to visualise this. We'll explore the data across several charts, and then stitch them together into a single dashboard view using `patchwork`. First, let's compare the total number of downloads over the last year for each of the two libraries we're interested in. We need to sum the downloads by library first:
+
+```{r downloads_by_lib}
+total_downloads <- downloads |> 
+  summarise(total_downloads = sum(n), .by = "library")
+```
+
+```{r total_downloads_chart}
+ggplot(total_downloads) +
+  geom_col(aes(x = library, y = total_downloads)) +
+  theme_minimal() +
+  theme(
+    axis.title = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size=14),
+    panel.grid = element_blank()
+  )
 ```
 
