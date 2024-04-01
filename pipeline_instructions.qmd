@@ -54,7 +54,6 @@ Now let's load the packages (the ones that will access the Google API will read 
 
 ```{r load_libraries}
 #| output: false
-library(usethis)
 library(googleCloudStorageR)
 library(janeaustenr)
 library(tidytext)
@@ -93,6 +92,7 @@ bucket_name
 Now we can create the bucket. Notice that I'm calling a couple of environment variables below - my GCP project ID and my the zone where I want to host the bucket, both of which are stored in the .Renviron file we created earlier.
 
 ```{r create_bucket}
+#| eval: false
 
 gcs_create_bucket(
   name = bucket_name,
@@ -114,7 +114,7 @@ We'll now set this bucket name as the default, to use again later when we're upl
 gcs_global_bucket(bucket_name)
 ```
 
-Next up, let's use the googleComputeEngineR package to create a VM as follows:
+I wanted to created a VM as well, which I attempted to do below but it fails. Maybe I'll try this again in future:
 
 ```{r}
 #| eval: false
@@ -140,6 +140,7 @@ bigrquery::bq_auth(path = Sys.getenv("GCS_AUTH_FILE"))
 And now we can query the PyPI data to get the number of downloads of pandas and Polars from the last year:
 
 ```{r get_bigquery_data}
+#| eval: false
 
 library(DBI)
 
@@ -176,6 +177,7 @@ dbDisconnect(con)
 Now let's upload this data as CSV files into our newly-created GCP bucket, and we'll use the date of the data to determine the filename for it:
 
 ```{r upload_to_gcs}
+#| eval: false
 
 pandas_filename <- paste0("pandas-stats-", min(pandas_stats$date), "_", 
                           max(pandas_stats$date))
@@ -193,6 +195,8 @@ gcs_upload(polars_stats, name = polars_filename)
 Now let's create a BigQuery dataset if we don't already have it:
 
 ```{r bq_dataset}
+#| eval: false
+
 pypi <- bq_dataset(Sys.getenv("GCS_DEFAULT_PROJECT_ID"), "pypi")
 dataset_exists <- bq_dataset_exists(pypi)
 
@@ -204,6 +208,8 @@ if(dataset_exists == FALSE) {
 Let's combine our dataframes into one, making sure we tag each first:
 
 ```{r combine_dataframes}
+#| eval: false
+
 pandas_tagged <- pandas_stats |> 
   mutate(library = "pandas")
 
@@ -218,6 +224,8 @@ python_lib_stats <- bind_rows(pandas_tagged, polars_tagged)
 Next, let's create a BigQuery table if we don't already have it:
 
 ```{r bq_table}
+#| eval: false
+
 stats_tbl <- bq_table(pypi, "python_lib_stats")
 table_exists <- bq_table_exists(stats_tbl)
 
@@ -231,6 +239,8 @@ if(table_exists == FALSE) {
 Now we can load this into our BigQuery table:
 
 ```{r bq_upload}
+#| eval: false
+
 bq_table <- bq_table(Sys.getenv("GCS_DEFAULT_PROJECT_ID"), "pypi", 
                      "python_lib_stats", type = "TABLE")
 
@@ -255,28 +265,35 @@ downloads <- tbl(con, "python_lib_stats") |> collect()
 dbDisconnect(con)
 ```
 
-And now we'll use `ggplot2` to visualise this. We'll explore the data across several charts, and then stitch them together into a single dashboard view using `patchwork`. First, let's compare the total number of downloads over the last year for each of the two libraries we're interested in. We need to sum the downloads by library first:
+And now we'll use `ggplot2` to visualise this. We'll explore the data across several charts, and then stitch them together into a single dashboard view using `patchwork`. First, let's compare the total number of downloads over the last year for each of the two libraries we're interested in. We need to sum the downloads by library first, and we'll make sure we uppercase "Polars" while we're at it:
 
 ```{r downloads_by_lib}
 total_downloads <- downloads |> 
-  summarise(total_downloads = sum(n), .by = "library") 
+  summarise(total_downloads = sum(n), .by = "library") |> 
+  mutate(library = ifelse(library == "polars", "Polars", "pandas"))
 ```
 
 Now we can create the visual from this data:
 
 ```{r total_downloads_chart}
-ggplot(total_downloads, aes(x = library, y = total_downloads)) +
-  geom_col() +
+total_downloads <- ggplot(total_downloads, aes(x = library, y = total_downloads)) +
+  geom_col(fill = "#23a1d6") +
   geom_text(aes(label = scales::label_number(
-    accuracy = 0.1, scale_cut = cut_short_scale()
+    accuracy = 0.1, scale_cut = scales::cut_short_scale()
     )(total_downloads)), vjust = -0.6) +
   theme_minimal() +
   theme(
     axis.title = element_blank(),
     axis.text.y = element_blank(),
     axis.text.x = element_text(size=14),
-    panel.grid = element_blank()
+    panel.grid = element_blank(),
+    title = element_text(size=14)
   ) +
-  labs(title = "Total downloads for pandas and Polars over the last year")
+  labs(
+    title = "The Polars library has a long way to go before it becomes\nas popular as pandas",
+    subtitle = paste0("Total downloads according to PyPI, ", min(downloads$date), " to date.")
+    )
+
+total_downloads
 ```
 

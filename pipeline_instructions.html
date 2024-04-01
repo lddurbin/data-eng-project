@@ -72,10 +72,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </head>
 
-<body class="fullcontent">
+<body>
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#problem-description" id="toc-problem-description" class="nav-link active" data-scroll-target="#problem-description">Problem Description</a></li>
+  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations">Limitations</a></li>
+  <li><a href="#getting-started" id="toc-getting-started" class="nav-link" data-scroll-target="#getting-started">Getting Started</a></li>
+  <li><a href="#infrastructure-as-code" id="toc-infrastructure-as-code" class="nav-link" data-scroll-target="#infrastructure-as-code">Infrastructure as Code</a></li>
+  <li><a href="#data-ingestion" id="toc-data-ingestion" class="nav-link" data-scroll-target="#data-ingestion">Data Ingestion</a></li>
+  <li><a href="#data-warehouse" id="toc-data-warehouse" class="nav-link" data-scroll-target="#data-warehouse">Data Warehouse</a></li>
+  <li><a href="#dashboard" id="toc-dashboard" class="nav-link" data-scroll-target="#dashboard">Dashboard</a></li>
+  </ul>
+</nav>
+</div>
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -104,160 +118,234 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="problem-description" class="level2">
 <h2 class="anchored" data-anchor-id="problem-description">Problem Description</h2>
 <p>This project is the final requirement for the <a href="https://github.com/DataTalksClub/data-engineering-zoomcamp">Data Engineering Zoomcamp</a>.</p>
-<p>In this project, we’re going to evaluate the popularity of the <a href="https://plotnine.org/">plotnine</a> Python library over the last two years. <em>plotnine</em> is an implementation of a <em>grammar of graphics</em> in Python based on ggplot2. I’m an enthuasiastic user of the R programming language on which <a href="https://ggplot2.tidyverse.org/">ggplot2</a> is built, so it seems fitting for me to evaluate a Python package based on an R package.</p>
-<p>The data about <em>plotnine</em> download comes from a public dataset hosted on Google BigQuery, which provides download stats on all the packages hosted on PyPI. I got the idea for using this dataset after watching a <a href="https://www.youtube.com/watch?v=3pLKTmdWDXk">End-to-End Data Engineering tutorial on YouTube</a> which uses this same dataset to analyse how the duckdb Python package has been performing. I’ve also found <a href="https://www.r-bloggers.com/2023/12/data-engineering-in-r-how-to-build-your-first-data-pipeline-with-r-mage-and-google-cloud-platform-in-under-45-minutes/">this blog post</a> quite helpful. And, of course, everything I’ve learned in the course so far!</p>
-<p>I’m going to attempt to build as much of the data pipeline as possible using R, and these instructions were written using Quarto in RStudio.</p>
+<p>In this project, we’re going to evaluate the popularity of two Python libraries over the last year: <a href="https://pola.rs/">Polars</a> and <a href="https://pandas.pydata.org/">pandas</a>.</p>
+<p><em>Polars</em> is a blazingly fast DataFrame library for manipulating structured data. The core is written in Rust, and available for Python, R and NodeJS. For this project, we’re going to evaluate the popularity of its implementation in Python.</p>
+<p><em>pandas</em> is a fast, powerful, flexible and easy to use open source data analysis and manipulation tool, built on top of the Python programming language.</p>
+<p><em>pandas</em> was used in the Data Engineering Zoomcamp, but I found its ergonomics to be sub-optimal compared to R’s <a href="https://dplyr.tidyverse.org/">dplyr</a> package. I recently read an excellent <a href="https://www.emilyriederer.com/post/py-rgo/">blogpost by Emily Riederer</a>, in which she recommends <em>Polars</em> as it “may feel more natural and less error-prone to R users for may reasons”.</p>
+<p>Polars is a relative newcomer, having been founded as an open source project in 2020, whereas pandas has been around for about as long as dplyr. I was curious how <em>Polars</em> has been performing over the last year, and how its growth compares to <em>pandas</em>.</p>
+<p>The data about these libraries comes from a public dataset hosted on Google BigQuery, which provides download stats on all the packages hosted on <a href="https://pypi.org/">PyPI</a>. I got the idea for using this dataset after watching a <a href="https://www.youtube.com/watch?v=3pLKTmdWDXk">End-to-End Data Engineering tutorial on YouTube</a> which uses this same dataset to analyse how the duckdb Python package has been performing. I’ve also found <a href="https://www.r-bloggers.com/2023/12/data-engineering-in-r-how-to-build-your-first-data-pipeline-with-r-mage-and-google-cloud-platform-in-under-45-minutes/">this blog post</a> quite helpful. And, of course, everything I’ve learned in the course so far!</p>
 <p>The GitHub repo for this project can be found <a href="https://github.com/lddurbin/data-eng-project">here</a>.</p>
+</section>
+<section id="limitations" class="level2">
+<h2 class="anchored" data-anchor-id="limitations">Limitations</h2>
+<p>Over the last couple of months I’ve had COVID and been challenged by my mental health. This has made it difficult to commit as much to the course as I would have liked to, but I’m still determined to complete this assignment on time. To achieve this whilst still putting my wellbeing first, I’m going to use R to build as much of the data pipeline as possible. Even though the course uses a variety of tools and it would be better to utilise them for this assignment, I have been writing R code most days for the past 4 years so I’m more likely to complete this assignment in time (and with greater ease) by using R. If I have a second shot at this, I will re-build the pipeline using Mage and dbt, and use Terraform for the IaC section.</p>
 </section>
 <section id="getting-started" class="level2">
 <h2 class="anchored" data-anchor-id="getting-started">Getting Started</h2>
 <p>If you want to follow along, start by running <code>renv::restore()</code> after cloning this repo to make sure you have the same packages as me.</p>
-<p>Let’s load the packages we’ll need:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(usethis)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(googleCloudStorageR)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janeaustenr)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidytext)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(googleComputeEngineR)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bigrquery)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
 <p>I’m assuming that you have a Google Cloud account, you’ve created a new project, and you’ve created a service account with the permissions described in <a href="https://youtu.be/Y2ux7gq3Z0o&amp;list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&amp;index=12">this video</a>. I also assume you’ve downloaded your key as a JSON file, and you’re pointing to that file in a .Renviron file in this project.</p>
 <p>There’s actually a bunch of environment variables we’ll need to set up for this pipeline to run. The <code>usethis</code> package makes it easy to edit .Renviron files - just call <code>usethis::edit_r_environ(scope="project")</code> and it will take you to a newly-generated .Renviron file. Populate it with something similar to this:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>GCS_AUTH_FILE <span class="ot">=</span> <span class="st">"path/to/creds.json"</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>GCS_DEFAULT_LOCATION <span class="ot">=</span> <span class="st">"&lt;nearest-location&gt;"</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>GCS_DEFAULT_PROJECT_ID <span class="ot">=</span> <span class="st">"&lt;your-project-id&gt;"</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>GCE_AUTH_FILE <span class="ot">=</span> <span class="st">"path/to/creds.json"</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>GCE_DEFAULT_PROJECT_ID <span class="ot">=</span> <span class="st">"&lt;your-project-id&gt;"</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>GCE_DEFAULT_ZONE <span class="ot">=</span> <span class="st">"&lt;nearest-zone&gt;"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>GCS_AUTH_FILE <span class="ot">=</span> <span class="st">"path/to/creds.json"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>GCS_DEFAULT_LOCATION <span class="ot">=</span> <span class="st">"&lt;nearest-location&gt;"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>GCS_DEFAULT_PROJECT_ID <span class="ot">=</span> <span class="st">"&lt;your-project-id&gt;"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>GCE_AUTH_FILE <span class="ot">=</span> <span class="st">"path/to/creds.json"</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>GCE_DEFAULT_PROJECT_ID <span class="ot">=</span> <span class="st">"&lt;your-project-id&gt;"</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>GCE_DEFAULT_ZONE <span class="ot">=</span> <span class="st">"&lt;nearest-zone&gt;"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Let’s configure the settings for our Google Project. We’ll use the <a href="https://code.markedmondson.me/googleCloudStorageR/articles/googleCloudStorageR.html">googleCloudStorageR</a> package for this, which will guide us through the process. The Data Engineering Zoomcamp uses Terraform, but in the interests of time I’ve opted for a R package instead to achieve the same ends.</p>
-<p>Assuming you have the .Renviron file populated as described above, just run the following:</p>
+<p>Now let’s load the packages (the ones that will access the Google API will read the newly-created .Renviron file):</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_setup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(googleCloudStorageR)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janeaustenr)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidytext)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(googleComputeEngineR)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bigrquery)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>The first set of variables above will configure the settings for accessing Google Cloud Storage, and we’re using the <a href="https://code.markedmondson.me/googleCloudStorageR/articles/googleCloudStorageR.html">googleCloudStorageR</a> package for this. The Data Engineering Zoomcamp uses Terraform, but in the interests of time I’ve opted for a R package instead to achieve the same ends.</p>
 </section>
 <section id="infrastructure-as-code" class="level2">
 <h2 class="anchored" data-anchor-id="infrastructure-as-code">Infrastructure as Code</h2>
-<p>Let’s create a new bucket where we’ll store our data. We’ll need to make we’re using a unique name for the new bucket, so to have some fun let’s grab a couple of words from the works of Jane Austen, following along with <a href="https://github.com/juliasilge/tidytext">Julie Silge’s instructions</a> for her tidytext package:</p>
+<p>Let’s create a new bucket where we’ll store our data. We’ll need to make we’re using a unique name for the new bucket, so to have some fun let’s grab a couple of words from the works of Jane Austen. <a href="https://github.com/juliasilge/tidytext">Julie Silge’s instructions</a> for her tidytext package really helped me here:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>austen_words <span class="ot">&lt;-</span> <span class="fu">austen_books</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">line =</span> <span class="fu">row_number</span>(), <span class="at">.by =</span> <span class="st">"book"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_tokens</span>(word, text) <span class="sc">|&gt;</span> </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(<span class="fu">get_stopwords</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>austen_words <span class="ot">&lt;-</span> <span class="fu">austen_books</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_tokens</span>(word, text) <span class="sc">|&gt;</span> </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(<span class="fu">get_stopwords</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Joining with `by = join_by(word)`</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>bucket_words <span class="ot">&lt;-</span> austen_words <span class="sc">|&gt;</span> </span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(word) <span class="sc">|&gt;</span> </span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sample</span>(<span class="dv">2</span>)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>bucket_numbers <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">runif</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">10000</span>))</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>bucket_name <span class="ot">&lt;-</span> <span class="fu">paste0</span>(bucket_words[<span class="dv">1</span>], <span class="st">"_"</span>, bucket_words[<span class="dv">2</span>], bucket_numbers)</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>bucket_name</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>bucket_words <span class="ot">&lt;-</span> austen_words <span class="sc">|&gt;</span> </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(word) <span class="sc">|&gt;</span> </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sample</span>(<span class="dv">2</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>bucket_numbers <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">runif</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">10000</span>))</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>bucket_name <span class="ot">&lt;-</span> <span class="fu">paste0</span>(bucket_words[<span class="dv">1</span>], <span class="st">"_"</span>, bucket_words[<span class="dv">2</span>], bucket_numbers)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>bucket_name</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "heap_wasteful4317"</code></pre>
+<pre><code>[1] "shape_coat8765"</code></pre>
 </div>
 </div>
-<p>Now we can create the bucket. Notice that I’m calling a couple of environment variables again below - my GCP project ID and my the zone where I want to host the bucket, both of which are stored in the .Renviron file we created earlier.</p>
+<p>Now we can create the bucket. Notice that I’m calling a couple of environment variables below - my GCP project ID and my the zone where I want to host the bucket, both of which are stored in the .Renviron file we created earlier.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_create_bucket</span>(</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">name =</span> bucket_name,</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">projectId =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_PROJECT_ID"</span>),</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">location =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_LOCATION"</span>),</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">storageClass =</span> <span class="fu">c</span>(<span class="st">"MULTI_REGIONAL"</span>),</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">predefinedAcl =</span> <span class="fu">c</span>(<span class="st">"projectPrivate"</span>),</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">predefinedDefaultObjectAcl =</span> <span class="fu">c</span>(<span class="st">"bucketOwnerFullControl"</span>),</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">projection =</span> <span class="fu">c</span>(<span class="st">"noAcl"</span>)</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>ℹ 2024-03-30 19:50:46 &gt; Bucket created successfully: heap_wasteful4317  in  asia</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>==Google Cloud Storage Bucket==
-Bucket:          heap_wasteful4317 
-Project Number:  403206438268 
-Location:        ASIA 
-Class:           MULTI_REGIONAL 
-Created:         2024-03-30 06:50:46 
-Updated:         2024-03-30 06:50:46 
-Versioning:      FALSE 
-Meta-generation: 1 
-eTag:            CAE= </code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_create_bucket</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">name =</span> bucket_name,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">projectId =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_PROJECT_ID"</span>),</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">location =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_LOCATION"</span>),</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">storageClass =</span> <span class="fu">c</span>(<span class="st">"MULTI_REGIONAL"</span>),</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">predefinedAcl =</span> <span class="fu">c</span>(<span class="st">"projectPrivate"</span>),</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">predefinedDefaultObjectAcl =</span> <span class="fu">c</span>(<span class="st">"bucketOwnerFullControl"</span>),</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">projection =</span> <span class="fu">c</span>(<span class="st">"noAcl"</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>If all went well, you should see some text in the console which will confirm that the bucket creation was successful.</p>
 <p>We’ll now set this bucket name as the default, to use again later when we’re uploading to it:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_global_bucket</span>(bucket_name)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_global_bucket</span>(bucket_name)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Set default bucket name to 'heap_wasteful4317'</code></pre>
+<pre><code>Set default bucket name to 'shape_coat8765'</code></pre>
 </div>
 </div>
-<p>Next up, let’s use the googleComputeEngineR package to create a VM as follows:</p>
+<p>I wanted to created a VM as well, which I attempted to do below but it fails. Maybe I’ll try this again in future:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>vm <span class="ot">&lt;-</span> <span class="fu">gce_vm</span>(<span class="at">name =</span> <span class="st">"test-vm"</span>, <span class="at">predefined_type =</span> <span class="st">"f1-micro"</span>, </span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>             <span class="at">image_project =</span> <span class="st">"ubuntu-os-cloud"</span>, </span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">image_family =</span> <span class="st">"ubuntu-2310-amd64"</span>)</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="do">## VM metadata</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>vm</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>vm <span class="ot">&lt;-</span> <span class="fu">gce_vm</span>(<span class="at">name =</span> <span class="st">"test-vm"</span>, <span class="at">predefined_type =</span> <span class="st">"f1-micro"</span>, </span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>             <span class="at">image_project =</span> <span class="st">"ubuntu-os-cloud"</span>, </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">image_family =</span> <span class="st">"ubuntu-2310-amd64"</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="do">## VM metadata</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>vm</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="data-ingestion" class="level2">
 <h2 class="anchored" data-anchor-id="data-ingestion">Data Ingestion</h2>
 <p>Ideally the following steps would be handled in Mage, but in the interest of time we’re just going to lay it out in this Quarto doc. If time permits, we’ll migrate this code into Mage so that the process can be orchestrated.</p>
-<p>We’re going to query the data about plotnine from the BigQuery public dataset called <em>pypi</em>, and then save this to our GCP bucket. First we’ll need to point the <code>bigrquery</code> package to our credentials in the JSON file via the environment variable in .Renviron:</p>
+<p>We’re going to query the data about pandas and Polars from the BigQuery public dataset called <em>pypi</em>, and then save this to our GCP bucket as CSV files. First we’ll need to point the <a href="https://bigrquery.r-dbi.org/index.html">bigrquery</a> package to our credentials in the JSON file via the environment variable in .Renviron:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>bigrquery<span class="sc">::</span><span class="fu">bq_auth</span>(<span class="at">path =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCS_AUTH_FILE"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>bigrquery<span class="sc">::</span><span class="fu">bq_auth</span>(<span class="at">path =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCS_AUTH_FILE"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>And now we can get the PyPI data about plotnine from yesterday, limiting the columns to the timestamp, country_code, and url:</p>
+<p>And now we can query the PyPI data to get the number of downloads of pandas and Polars from the last year:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>yesterday <span class="ot">&lt;-</span> <span class="fu">Sys.Date</span>() <span class="sc">-</span><span class="dv">1</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>data_src <span class="ot">&lt;-</span> <span class="st">"`bigquery-public-data.pypi.file_downloads`"</span></span>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>query_tbl <span class="ot">&lt;-</span> <span class="cf">function</span>(data, lib_name) {</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  last_year <span class="ot">&lt;-</span> <span class="fu">Sys.Date</span>() <span class="sc">-</span> <span class="dv">365</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  lib_stats <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span> </span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    project <span class="sc">==</span> lib_name,</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as.Date</span>(timestamp) <span class="sc">&gt;=</span> last_year</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">date =</span> <span class="fu">as.Date</span>(timestamp)) <span class="sc">|&gt;</span> </span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(date) <span class="sc">|&gt;</span> </span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(lib_stats)</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  bigrquery<span class="sc">::</span><span class="fu">bigquery</span>(),</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">project =</span> <span class="st">"bigquery-public-data"</span>,</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> <span class="st">"pypi"</span>,</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">billing =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_PROJECT_ID"</span>)</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>downloads <span class="ot">&lt;-</span> <span class="fu">tbl</span>(con, <span class="st">"file_downloads"</span>)</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>polars_stats <span class="ot">&lt;-</span> <span class="fu">query_tbl</span>(downloads, <span class="st">"polars"</span>)</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>pandas_stats <span class="ot">&lt;-</span> <span class="fu">query_tbl</span>(downloads, <span class="st">"pandas"</span>)</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(con)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now let’s upload this data as CSV files into our newly-created GCP bucket, and we’ll use the date of the data to determine the filename for it:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>pandas_filename <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"pandas-stats-"</span>, <span class="fu">min</span>(pandas_stats<span class="sc">$</span>date), <span class="st">"_"</span>, </span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">max</span>(pandas_stats<span class="sc">$</span>date))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>polars_filename <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"polars-stats-"</span>, <span class="fu">min</span>(polars_stats<span class="sc">$</span>date), <span class="st">"_"</span>, </span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">max</span>(polars_stats<span class="sc">$</span>date))</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_upload</span>(pandas_stats, <span class="at">name =</span> pandas_filename)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_upload</span>(polars_stats, <span class="at">name =</span> polars_filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="data-warehouse" class="level2">
+<h2 class="anchored" data-anchor-id="data-warehouse">Data Warehouse</h2>
+<p>Now let’s create a BigQuery dataset if we don’t already have it:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>pypi <span class="ot">&lt;-</span> <span class="fu">bq_dataset</span>(<span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_PROJECT_ID"</span>), <span class="st">"pypi"</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>dataset_exists <span class="ot">&lt;-</span> <span class="fu">bq_dataset_exists</span>(pypi)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(dataset_exists <span class="sc">==</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bq_dataset_create</span>(pypi)</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Let’s combine our dataframes into one, making sure we tag each first:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>pandas_tagged <span class="ot">&lt;-</span> pandas_stats <span class="sc">|&gt;</span> </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">library =</span> <span class="st">"pandas"</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>sql <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"SELECT timestamp, country_code, url FROM "</span>,</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>              data_src,</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>              <span class="st">" WHERE TIMESTAMP_TRUNC(timestamp, DAY) = TIMESTAMP(</span><span class="sc">\"</span><span class="st">"</span>,</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>              yesterday,</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>              <span class="st">"</span><span class="sc">\"</span><span class="st">) AND project = 'plotnine'"</span>)</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>tb <span class="ot">&lt;-</span> <span class="fu">bq_project_query</span>(<span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_PROJECT_ID"</span>), sql)</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>plotnine_stats <span class="ot">&lt;-</span> <span class="fu">bq_table_download</span>(tb)</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="fu">bq_table_download</span>(tb, <span class="at">n_max =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 10 × 3
-   timestamp           country_code url                                         
-   &lt;dttm&gt;              &lt;chr&gt;        &lt;chr&gt;                                       
- 1 2024-03-29 23:56:55 US           /packages/5b/b5/fb81914804ad0d8e4a53118df34…
- 2 2024-03-29 23:56:36 US           /packages/5b/b5/fb81914804ad0d8e4a53118df34…
- 3 2024-03-29 23:59:23 US           /packages/7f/db/3bee59d51790f8ed8fa1a22df5f…
- 4 2024-03-29 23:58:53 US           /packages/7f/db/3bee59d51790f8ed8fa1a22df5f…
- 5 2024-03-29 23:59:23 US           /packages/7f/db/3bee59d51790f8ed8fa1a22df5f…
- 6 2024-03-29 23:59:26 US           /packages/7f/db/3bee59d51790f8ed8fa1a22df5f…
- 7 2024-03-29 23:58:53 US           /packages/7f/db/3bee59d51790f8ed8fa1a22df5f…
- 8 2024-03-29 23:59:25 US           /packages/7f/db/3bee59d51790f8ed8fa1a22df5f…
- 9 2024-03-29 23:59:28 US           /packages/7f/db/3bee59d51790f8ed8fa1a22df5f…
-10 2024-03-29 23:59:24 US           /packages/7f/db/3bee59d51790f8ed8fa1a22df5f…</code></pre>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>polars_tagged <span class="ot">&lt;-</span> polars_stats <span class="sc">|&gt;</span> </span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">library =</span> <span class="st">"polars"</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>python_lib_stats <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(pandas_tagged, polars_tagged)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div>
-<p>Now let’s upload this data as a CSV file into our newly-created GCP bucket, and we’ll use the date of the data to determine the filename for it:</p>
+<p>Next, let’s create a BigQuery table if we don’t already have it:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>filename <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"plotnine-stats-"</span>, <span class="fu">as.character</span>(yesterday))</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_upload</span>(plotnine_stats, <span class="at">name =</span> filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>ℹ 2024-03-30 19:50:57 &gt; File size detected as  13.8 Mb</code></pre>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>stats_tbl <span class="ot">&lt;-</span> <span class="fu">bq_table</span>(pypi, <span class="st">"python_lib_stats"</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>table_exists <span class="ot">&lt;-</span> <span class="fu">bq_table_exists</span>(stats_tbl)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(table_exists <span class="sc">==</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  fields <span class="ot">&lt;-</span> <span class="fu">as_bq_fields</span>(python_lib_stats)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bq_table_create</span>(stats_tbl, fields)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>ℹ 2024-03-30 19:50:57 &gt; Found resumeable upload URL:  https://www.googleapis.com/upload/storage/v1/b/heap_wasteful4317/o/?uploadType=resumable&amp;name=plotnine-stats-2024-03-29.csv&amp;predefinedAcl=private&amp;upload_id=ABPtcPqdqMBMtgmzkLrotEQglTs85j0XY5eAuGylCUQMyQo3mTubg7M_uDkgrB92t5Y9i1uSP_j6HfjWa4rFm9OJO-x9bx_UWrD0jHvkCiygHuEJ</code></pre>
+<p>Now we can load this into our BigQuery table:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>bq_table <span class="ot">&lt;-</span> <span class="fu">bq_table</span>(<span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_PROJECT_ID"</span>), <span class="st">"pypi"</span>, </span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"python_lib_stats"</span>, <span class="at">type =</span> <span class="st">"TABLE"</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="fu">bq_table_upload</span>(bq_table, python_lib_stats)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="dashboard" class="level2">
+<h2 class="anchored" data-anchor-id="dashboard">Dashboard</h2>
+<p>For the final step in this process, let’s create a dashboard to compare the popularity of these two Python libraries. Step one is to grab the data we’ve uploaded to BigQuery:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  bigrquery<span class="sc">::</span><span class="fu">bigquery</span>(),</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">project =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_PROJECT_ID"</span>),</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataset =</span> <span class="st">"pypi"</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">billing =</span> <span class="fu">Sys.getenv</span>(<span class="st">"GCS_DEFAULT_PROJECT_ID"</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>downloads <span class="ot">&lt;-</span> <span class="fu">tbl</span>(con, <span class="st">"python_lib_stats"</span>) <span class="sc">|&gt;</span> <span class="fu">collect</span>()</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(con)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>And now we’ll use <code>ggplot2</code> to visualise this. We’ll explore the data across several charts, and then stitch them together into a single dashboard view using <code>patchwork</code>. First, let’s compare the total number of downloads over the last year for each of the two libraries we’re interested in. We need to sum the downloads by library first, and we’ll make sure we uppercase “Polars” while we’re at it:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>total_downloads <span class="ot">&lt;-</span> downloads <span class="sc">|&gt;</span> </span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">total_downloads =</span> <span class="fu">sum</span>(n), <span class="at">.by =</span> <span class="st">"library"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">library =</span> <span class="fu">ifelse</span>(library <span class="sc">==</span> <span class="st">"polars"</span>, <span class="st">"Polars"</span>, <span class="st">"pandas"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now we can create the visual from this data:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>total_downloads <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(total_downloads, <span class="fu">aes</span>(<span class="at">x =</span> library, <span class="at">y =</span> total_downloads)) <span class="sc">+</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">fill =</span> <span class="st">"#23a1d6"</span>) <span class="sc">+</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> scales<span class="sc">::</span><span class="fu">label_number</span>(</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">accuracy =</span> <span class="fl">0.1</span>, <span class="at">scale_cut =</span> scales<span class="sc">::</span><span class="fu">cut_short_scale</span>()</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    )(total_downloads)), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">size=</span><span class="dv">14</span>),</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">element_text</span>(<span class="at">size=</span><span class="dv">14</span>)</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"The Polars library has a long way to go before it becomes</span><span class="sc">\n</span><span class="st">as popular as pandas"</span>,</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="fu">paste0</span>(<span class="st">"Total downloads according to PyPI, "</span>, <span class="fu">min</span>(downloads<span class="sc">$</span>date), <span class="st">" to date."</span>)</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>total_downloads</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="pipeline_instructions_files/figure-html/total_downloads_chart-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </section>
