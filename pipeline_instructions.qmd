@@ -18,7 +18,7 @@ In this project, we're going to evaluate the popularity of two Python libraries 
 
 *pandas* was used in the Data Engineering Zoomcamp, but I found its ergonomics to be sub-optimal compared to R's [dplyr](https://dplyr.tidyverse.org/) package. I recently read an excellent [blogpost by Emily Riederer](https://www.emilyriederer.com/post/py-rgo/), in which she recommends *Polars* as it "may feel more natural and less error-prone to R users for may reasons".
 
-Polars is a relative newcomer, having been founded as an open source project in 2020, whereas pandas has been around for about as long as dplyr. I was curious how *Polars* has been performing over the last year, and how its growth compares to *pandas*.
+Polars is a relative newcomer, having been founded as an open source project in 2020, whereas pandas has been around for longer than dplyr. I was curious how *Polars* has been performing over the last year, and how its growth compares to *pandas*.
 
 The data about these libraries comes from a public dataset hosted on Google BigQuery, which provides download stats on all the packages hosted on [PyPI](https://pypi.org/). I got the idea for using this dataset after watching a [End-to-End Data Engineering tutorial on YouTube](https://www.youtube.com/watch?v=3pLKTmdWDXk) which uses this same dataset to analyse how the duckdb Python package has been performing. I've also found [this blog post](https://www.r-bloggers.com/2023/12/data-engineering-in-r-how-to-build-your-first-data-pipeline-with-r-mage-and-google-cloud-platform-in-under-45-minutes/) quite helpful. And, of course, everything I've learned in the course so far!
 
@@ -30,7 +30,7 @@ Over the last couple of months I've had COVID and been challenged by my mental h
 
 ## Getting Started
 
-If you want to follow along, start by running `renv::restore()` after cloning this repo to make sure you have the same packages as me.
+If you want to follow along, start by running `renv::restore()` after cloning this repo to make sure you have the same versions of the same packages as I'm using
 
 I'm assuming that you have a Google Cloud account, you've created a new project, and you've created a service account with the permissions described in [this video](https://youtu.be/Y2ux7gq3Z0o&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=12). I also assume you've downloaded your key as a JSON file, and you're pointing to that file in a .Renviron file in this project.
 
@@ -48,6 +48,8 @@ GCE_DEFAULT_PROJECT_ID = "<your-project-id>"
 GCE_DEFAULT_ZONE = "<nearest-zone>"
 ```
 
+The first set of variables above will configure the settings for accessing Google Cloud Storage, and we're using the [googleCloudStorageR](https://code.markedmondson.me/googleCloudStorageR/articles/googleCloudStorageR.html) package for this. The Data Engineering Zoomcamp uses Terraform, but in the interests of time I've opted for a R package instead to achieve the same ends.
+
 Now let's load the packages (the ones that will access the Google API will read the newly-created .Renviron file):
 
 ```{r load_libraries}
@@ -56,7 +58,7 @@ library(googleCloudStorageR)
 library(janeaustenr)
 library(tidytext)
 library(dplyr)
-library(googleComputeEngineR)
+library(googleComputeEngineR) # I didn't end up using this one
 library(bigrquery)
 library(ggplot2)
 library(lubridate)
@@ -64,7 +66,6 @@ library(tidyr)
 library(patchwork)
 ```
 
-The first set of variables above will configure the settings for accessing Google Cloud Storage, and we're using the [googleCloudStorageR](https://code.markedmondson.me/googleCloudStorageR/articles/googleCloudStorageR.html) package for this. The Data Engineering Zoomcamp uses Terraform, but in the interests of time I've opted for a R package instead to achieve the same ends.
 
 ## Infrastructure as Code
 
@@ -81,6 +82,8 @@ bucket_words <- austen_words |>
   unique() |> 
   sample(2)
 
+bucket_words <- gsub('[[:punct:] ]+','', bucket_words)
+
 bucket_numbers <- round(runif(1, 1, 10000))
 
 bucket_name <- paste0(bucket_words[1], "_", bucket_words[2], bucket_numbers)
@@ -92,7 +95,6 @@ bucket_name
 Now we can create the bucket. Notice that I'm calling a couple of environment variables below - my GCP project ID and my the zone where I want to host the bucket, both of which are stored in the .Renviron file we created earlier.
 
 ```{r create_bucket}
-#| eval: false
 
 gcs_create_bucket(
   name = bucket_name,
@@ -137,20 +139,21 @@ We're going to query the data about pandas and Polars from the BigQuery public d
 bigrquery::bq_auth(path = Sys.getenv("GCS_AUTH_FILE"))
 ```
 
-And now we can query the PyPI data to get the number of downloads of pandas and Polars from the last year:
+And now we can query the PyPI data to get the number of downloads of pandas and Polars from the last 13 months, excluding the current month:
 
 ```{r get_bigquery_data}
-#| eval: false
 
 library(DBI)
 
 query_tbl <- function(data, lib_name) {
-  last_year <- Sys.Date() - 365
+  this_month <- floor_date(Sys.Date(), unit = "months")
+  last_year <- this_month - months(13)
   
   lib_stats <- data |> 
   filter(
     project == lib_name,
-    as.Date(timestamp) >= last_year
+    as.Date(timestamp) >= last_year,
+    as.Date(timestamp) < this_month
   ) |> 
   mutate(date = as.Date(timestamp)) |> 
   count(date) |> 
@@ -177,7 +180,6 @@ dbDisconnect(con)
 Now let's upload this data as CSV files into our newly-created GCP bucket, and we'll use the date of the data to determine the filename for it:
 
 ```{r upload_to_gcs}
-#| eval: false
 
 pandas_filename <- paste0("pandas-stats-", min(pandas_stats$date), "_", 
                           max(pandas_stats$date))
@@ -194,7 +196,6 @@ gcs_upload(polars_stats, name = polars_filename)
 Now let's create a BigQuery dataset if we don't already have it:
 
 ```{r bq_dataset}
-#| eval: false
 
 pypi <- bq_dataset(Sys.getenv("GCS_DEFAULT_PROJECT_ID"), "pypi")
 dataset_exists <- bq_dataset_exists(pypi)
@@ -207,7 +208,6 @@ if(dataset_exists == FALSE) {
 Let's combine our dataframes into one, making sure we tag each first:
 
 ```{r combine_dataframes}
-#| eval: false
 
 pandas_tagged <- pandas_stats |> 
   mutate(library = "pandas")
@@ -222,7 +222,6 @@ python_lib_stats <- bind_rows(pandas_tagged, polars_tagged)
 Next, let's create a BigQuery table if we don't already have it:
 
 ```{r bq_table}
-#| eval: false
 
 stats_tbl <- bq_table(pypi, "python_lib_stats")
 table_exists <- bq_table_exists(stats_tbl)
@@ -237,7 +236,6 @@ if(table_exists == FALSE) {
 Now we can load this into our BigQuery table:
 
 ```{r bq_upload}
-#| eval: false
 
 bq_table <- bq_table(Sys.getenv("GCS_DEFAULT_PROJECT_ID"), "pypi", 
                      "python_lib_stats", type = "TABLE")
@@ -274,7 +272,7 @@ total_downloads <- downloads |>
 Now we can create the visual from this data:
 
 ```{r total_downloads_chart}
-total_downloads <- ggplot(total_downloads, aes(x = library, y = total_downloads)) +
+total_downloads_plot <- ggplot(total_downloads, aes(x = library, y = total_downloads)) +
   geom_col(fill = "#23a1d6") +
   geom_text(aes(label = scales::label_number(
     accuracy = 0.1, scale_cut = scales::cut_short_scale()
@@ -289,10 +287,10 @@ total_downloads <- ggplot(total_downloads, aes(x = library, y = total_downloads)
   ) +
   labs(
     title = "The Polars library has a long way to go before it becomes\nas popular as pandas",
-    subtitle = paste0("Total downloads according to PyPI, ", min(downloads$date), " to date.")
+    subtitle = paste0("Total downloads according to PyPI, ", min(downloads$date), " to ", max(downloads$date), ".")
     )
 
-total_downloads
+total_downloads_plot
 ```
 
 Woah, pandas has had *way* more downloads compared to Polars than I'd expected! But to what extent is each library growing in popularity over time? Let's look at a basic trend chart first:
@@ -322,7 +320,7 @@ weekday_pattern
 
 Sure enough, there's a noticeable dip on the weekend for both - that makes sense. But how do understand the true trend in the data for each of these libraries?
 
-We have 12 months of data, so let's group by month first:
+We have 13 months of data, so let's group by month first:
 
 ```{r downloads_by_month}
 downloads_by_month <- downloads |> 
@@ -333,31 +331,39 @@ downloads_by_month <- downloads |>
 And now let's plot these monthly values:
 
 ```{r downloads_by_month_charts}
-ggplot(downloads_by_month, aes(x = month, y = downloads)) +
+monthly_downloads_plot <- ggplot(
+  downloads_by_month, aes(x = month, y = downloads)
+) +
   geom_line() +
   geom_point(size = 2.5) +
   facet_wrap(~library, nrow = 2, scales = "free")
+
+monthly_downloads_plot
 ```
 
 Again, we've set the scales to "free" here to clearly see the shape of the downloads data for each Python library, and they tell a similar story: growth nearly every month over the last year, with last month (March 2024) performing especially well. But because the absolute values are very different, it's hard to tell if they're growing at the same rate or not.
 
-To round off this analysis, let's look at the % change in monthly downloads at the start of the time period to the end of the time period:
+To round off this analysis, let's look at the annual % change in monthly downloads from March last year to March this year:
 
-```{r}
-yoy_change <- downloads_by_month |> 
+```{r yoy_change_plot}
+
+yoy_change_plot <- downloads_by_month |> 
   arrange(month) |> 
   slice(c(1, n()), .by = "library") |> 
-  mutate(month = month(month, label = TRUE)) |> 
-  pivot_wider(names_from = "month", values_from = "downloads") |> 
   mutate(
-    variance = Mar-Apr,
-    perc_change = round((variance/Apr)*100)
+    year = paste0(month(month, label = TRUE), "_", year(month)),
+    .keep = "unused"
+  ) |> 
+  pivot_wider(names_from = "year", values_from = "downloads") |> 
+  mutate(
+    variance = Mar_2024 - Mar_2023,
+    perc_change = round((variance/Mar_2023)*100)
   )
 
-yoy_change
+yoy_change_plot
 ```
 
-So, whilst pandas has seen a `r yoy_change |> filter(library == "pandas") |> pull(perc_change)`% increase in monthly downloads after a year, Polars has seen a whopping `r yoy_change |> filter(library == "Polars") |> pull(perc_change)`% increase over the same period. Whilst Polars has a long way to go before it's as popular as pandas, it's definitely on the right track.
+
 
 
 ## Dashboard
