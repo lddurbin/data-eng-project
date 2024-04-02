@@ -14,7 +14,7 @@ In this project, we're going to evaluate the popularity of two Python libraries 
 
 *Polars* is a blazingly fast DataFrame library for manipulating structured data. The core is written in Rust, and available for Python, R and NodeJS. For this project, we're going to evaluate the popularity of its implementation in Python.
 
-*pandas* is a fast, powerful, flexible and easy to use open source data analysis and manipulation tool, built on top of the Python programming language. 
+*pandas* is a fast, powerful, flexible and easy to use open source data analysis and manipulation tool, built on top of the Python programming language.
 
 *pandas* was used in the Data Engineering Zoomcamp, but I found its ergonomics to be sub-optimal compared to R's [dplyr](https://dplyr.tidyverse.org/) package. I recently read an excellent [blogpost by Emily Riederer](https://www.emilyriederer.com/post/py-rgo/), in which she recommends *Polars* as it "may feel more natural and less error-prone to R users for may reasons".
 
@@ -24,11 +24,9 @@ The data about these libraries comes from a public dataset hosted on Google BigQ
 
 The GitHub repo for this project can be found [here](https://github.com/lddurbin/data-eng-project).
 
-
 ## Limitations
 
 Over the last couple of months I've had COVID and been challenged by my mental health. This has made it difficult to commit as much to the course as I would have liked to, but I'm still determined to complete this assignment on time. To achieve this whilst still putting my wellbeing first, I'm going to use R to build as much of the data pipeline as possible. Even though the course uses a variety of tools and it would be better to utilise them for this assignment, I have been writing R code most days for the past 4 years so I'm more likely to complete this assignment in time (and with greater ease) by using R. If I have a second shot at this, I will re-build the pipeline using Mage and dbt, and use Terraform for the IaC section.
-
 
 ## Getting Started
 
@@ -61,10 +59,12 @@ library(dplyr)
 library(googleComputeEngineR)
 library(bigrquery)
 library(ggplot2)
+library(lubridate)
+library(tidyr)
+library(patchwork)
 ```
 
 The first set of variables above will configure the settings for accessing Google Cloud Storage, and we're using the [googleCloudStorageR](https://code.markedmondson.me/googleCloudStorageR/articles/googleCloudStorageR.html) package for this. The Data Engineering Zoomcamp uses Terraform, but in the interests of time I've opted for a R package instead to achieve the same ends.
-
 
 ## Infrastructure as Code
 
@@ -189,7 +189,6 @@ gcs_upload(pandas_stats, name = pandas_filename)
 gcs_upload(polars_stats, name = polars_filename)
 ```
 
-
 ## Data Warehouse
 
 Now let's create a BigQuery dataset if we don't already have it:
@@ -220,7 +219,6 @@ python_lib_stats <- bind_rows(pandas_tagged, polars_tagged)
 
 ```
 
-
 Next, let's create a BigQuery table if we don't already have it:
 
 ```{r bq_table}
@@ -247,8 +245,7 @@ bq_table <- bq_table(Sys.getenv("GCS_DEFAULT_PROJECT_ID"), "pypi",
 bq_table_upload(bq_table, python_lib_stats)
 ```
 
-
-## Dashboard
+## Analysis
 
 For the final step in this process, let's create a dashboard to compare the popularity of these two Python libraries. Step one is to grab the data we've uploaded to BigQuery:
 
@@ -260,17 +257,18 @@ con <- dbConnect(
   billing = Sys.getenv("GCS_DEFAULT_PROJECT_ID")
 )
 
-downloads <- tbl(con, "python_lib_stats") |> collect()
+downloads <- tbl(con, "python_lib_stats") |> 
+  collect() |> 
+  mutate(library = ifelse(library == "polars", "Polars", "pandas"))
 
 dbDisconnect(con)
 ```
 
-And now we'll use `ggplot2` to visualise this. We'll explore the data across several charts, and then stitch them together into a single dashboard view using `patchwork`. First, let's compare the total number of downloads over the last year for each of the two libraries we're interested in. We need to sum the downloads by library first, and we'll make sure we uppercase "Polars" while we're at it:
+And now we'll use `ggplot2` to visualise this. We'll explore the data across several charts, and then stitch them together into a single dashboard view using `patchwork`. First, let's compare the total number of downloads over the last year for each of the two libraries we're interested in. We need to sum the downloads by library first:
 
 ```{r downloads_by_lib}
 total_downloads <- downloads |> 
-  summarise(total_downloads = sum(n), .by = "library") |> 
-  mutate(library = ifelse(library == "polars", "Polars", "pandas"))
+  summarise(total_downloads = sum(n), .by = "library")
 ```
 
 Now we can create the visual from this data:
@@ -296,4 +294,73 @@ total_downloads <- ggplot(total_downloads, aes(x = library, y = total_downloads)
 
 total_downloads
 ```
+
+Woah, pandas has had *way* more downloads compared to Polars than I'd expected! But to what extent is each library growing in popularity over time? Let's look at a basic trend chart first:
+
+```{r simple_trend_charts}
+basic_trend <- ggplot(downloads) +
+  geom_line(aes(x = date, y = n)) +
+  facet_wrap(~library, nrow = 2) +
+  theme_minimal()
+
+basic_trend
+```
+
+Hmmm, this doesn't tell us anything we didn't already know by comparing the annual totals. There is an interesting wave pattern to the data though - might this be based on days of the week? Let's sum the totals by weekday to find out (we'll allow independent scales here because we're interested in the pattern of the data for each library, as opposed to a comparison of each).
+
+```{r weekday_pattern_chart}
+weekday_pattern <- downloads |> 
+  mutate(wday = wday(date, label = TRUE, week_start = 1)) |> 
+  summarise(downloads = sum(n), .by = c("library", "wday")) |> 
+  ggplot() +
+  geom_col(aes(x = wday, y = downloads)) +
+  facet_wrap(~library, nrow = 2, scales = "free") +
+  theme_minimal()
+
+weekday_pattern
+```
+
+Sure enough, there's a noticeable dip on the weekend for both - that makes sense. But how do understand the true trend in the data for each of these libraries?
+
+We have 12 months of data, so let's group by month first:
+
+```{r downloads_by_month}
+downloads_by_month <- downloads |> 
+  mutate(month = floor_date(date, unit = "month")) |> 
+  summarise(downloads = sum(n), .by = c("library", "month"))
+```
+
+And now let's plot these monthly values:
+
+```{r downloads_by_month_charts}
+ggplot(downloads_by_month, aes(x = month, y = downloads)) +
+  geom_line() +
+  geom_point(size = 2.5) +
+  facet_wrap(~library, nrow = 2, scales = "free")
+```
+
+Again, we've set the scales to "free" here to clearly see the shape of the downloads data for each Python library, and they tell a similar story: growth nearly every month over the last year, with last month (March 2024) performing especially well. But because the absolute values are very different, it's hard to tell if they're growing at the same rate or not.
+
+To round off this analysis, let's look at the % change in monthly downloads at the start of the time period to the end of the time period:
+
+```{r}
+yoy_change <- downloads_by_month |> 
+  arrange(month) |> 
+  slice(c(1, n()), .by = "library") |> 
+  mutate(month = month(month, label = TRUE)) |> 
+  pivot_wider(names_from = "month", values_from = "downloads") |> 
+  mutate(
+    variance = Mar-Apr,
+    perc_change = round((variance/Apr)*100)
+  )
+
+yoy_change
+```
+
+So, whilst pandas has seen a `r yoy_change |> filter(library == "pandas") |> pull(perc_change)`% increase in monthly downloads after a year, Polars has seen a whopping `r yoy_change |> filter(library == "Polars") |> pull(perc_change)`% increase over the same period. Whilst Polars has a long way to go before it's as popular as pandas, it's definitely on the right track.
+
+
+## Dashboard
+
+Now that we've concluded our analysis, let's bring everything together into a single dashboard. We'll show the overall comparison between the two libraries, the weekday patterns, and finally the year-on-year change:
 
