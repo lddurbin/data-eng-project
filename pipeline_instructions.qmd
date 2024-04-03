@@ -63,7 +63,7 @@ library(bigrquery)
 library(ggplot2)
 library(lubridate)
 library(tidyr)
-library(patchwork)
+library(ggiraph)
 ```
 
 
@@ -246,7 +246,7 @@ bq_table_upload(bq_table, python_lib_stats)
 ## Analysis
 
 For the final step in this process, let's create a dashboard to compare the popularity of these two Python libraries. Step one is to grab the data we've uploaded to BigQuery:
-
+z
 ```{r get_downloads_data}
 con <- dbConnect(
   bigrquery::bigquery(),
@@ -304,18 +304,35 @@ basic_trend <- ggplot(downloads) +
 basic_trend
 ```
 
-Hmmm, this doesn't tell us anything we didn't already know by comparing the annual totals. There is an interesting wave pattern to the data though - might this be based on days of the week? Let's sum the totals by weekday to find out (we'll allow independent scales here because we're interested in the pattern of the data for each library, as opposed to a comparison of each).
+Hmmm, this doesn't tell us anything we didn't already know by comparing the annual totals. There is an interesting wave pattern to the data though - might this be based on days of the week? Let's sum the totals by weekday to find out. We'll allow independent scales here because we're interested in the pattern of the data for each library, as opposed to a comparison of each, and we'll also bring in some interactivity with `ggiraph` (hover over the bars to see what I mean):
 
 ```{r weekday_pattern_chart}
 weekday_pattern <- downloads |> 
   mutate(wday = wday(date, label = TRUE, week_start = 1)) |> 
-  summarise(downloads = sum(n), .by = c("library", "wday")) |> 
+  summarise(avg_downloads = round(mean(n)), .by = c("library", "wday")) |> 
   ggplot() +
-  geom_col(aes(x = wday, y = downloads)) +
+  geom_col_interactive(
+    aes(x = wday, y = avg_downloads, fill = library, tooltip = paste0(
+      "Average downloads: ", scales::label_comma()(avg_downloads))
+    )
+  ) +
   facet_wrap(~library, nrow = 2, scales = "free") +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    axis.title = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size=14),
+    panel.grid = element_blank(),
+    title = element_text(size=14),
+    strip.text = element_text(size = rel(1.5)),
+    legend.position = "none"
+  ) +
+  labs(
+    title = "There is a distinctive pattern to the number of downloads\nfor both libraries, with noticable dips on the weekends",
+    subtitle = paste0("Average daily downloads according to PyPI,\n", min(downloads$date), " to ", max(downloads$date), ".")
+  )
 
-weekday_pattern
+girafe(ggobj = weekday_pattern)
 ```
 
 Sure enough, there's a noticeable dip on the weekend for both - that makes sense. But how do understand the true trend in the data for each of these libraries?
@@ -336,7 +353,22 @@ monthly_downloads_plot <- ggplot(
 ) +
   geom_line() +
   geom_point(size = 2.5) +
-  facet_wrap(~library, nrow = 2, scales = "free")
+  facet_wrap(~library, nrow = 2, scales = "free") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::label_comma()) +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_text(size=11),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    title = element_text(size=14),
+    strip.text = element_text(size = rel(1.5)),
+    legend.position = "none",
+    plot.title.position = "plot"
+  ) +
+  labs(
+    title = "Downloads of both pandas and Polars have grown nearly every\nmonth over the last year"
+  )
 
 monthly_downloads_plot
 ```
@@ -357,16 +389,26 @@ yoy_change_tbl <- downloads_by_month |>
   pivot_wider(names_from = "year", values_from = "downloads") |> 
   mutate(
     variance = Mar_2024 - Mar_2023,
-    perc_change = round((variance/Mar_2023)*100)
+    perc_change = (variance/Mar_2023)
   )
 
-yoy_change_tbl
+yoy_change_plot <- ggplot(yoy_change_tbl, aes(x = library, y = perc_change)) +
+  geom_col(fill = "#23a1d6") +
+  geom_text(aes(label = scales::label_percent()(perc_change)), vjust = -0.6) +
+  theme_minimal() +
+  theme(
+    axis.title = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(size=14),
+    panel.grid = element_blank(),
+    title = element_text(size=14)
+  ) +
+  labs(
+    title = "The Polars library has grown significantly more than has\npandas over the last year",
+    subtitle = paste0("Year-on-year % change in downloads according to PyPI,\n", min(downloads$date), " to ", max(downloads$date), ".")
+    )
+
+yoy_change_plot
 ```
 
 We can see from this that even though downloads of pandas grew by `r yoy_change_tbl |> filter(library == "pandas") |> pull(perc_change)`% from March 2023 to March 2024, downloads of Polars grew by a whopping `r yoy_change_tbl |> filter(library == "Polars") |> pull(perc_change)`% over the same period. Whilst Polars has a long way to go before it's as popular as pandas, its growth over the last year has been tremendous.
-
-
-## Dashboard
-
-Now that we've concluded our analysis, let's bring everything together into a single dashboard. We'll show the overall comparison between the two libraries, the weekday patterns, and finally the year-on-year change:
-

@@ -183,7 +183,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>bucket_name</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "fruition_ensigncy3576"</code></pre>
+<pre><code>[1] "shrink_row1916"</code></pre>
 </div>
 </div>
 <p>Now we can create the bucket. Notice that I’m calling a couple of environment variables below - my GCP project ID and my the zone where I want to host the bucket, both of which are stored in the .Renviron file we created earlier.</p>
@@ -198,16 +198,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">projection =</span> <span class="fu">c</span>(<span class="st">"noAcl"</span>)</span>
 <span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>ℹ 2024-04-02 17:57:50 &gt; Bucket created successfully: fruition_ensigncy3576  in  asia</code></pre>
+<pre><code>ℹ 2024-04-03 16:37:17 &gt; Bucket created successfully: shrink_row1916  in  asia</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>==Google Cloud Storage Bucket==
-Bucket:          fruition_ensigncy3576 
+Bucket:          shrink_row1916 
 Project Number:  403206438268 
 Location:        ASIA 
 Class:           MULTI_REGIONAL 
-Created:         2024-04-02 04:57:49 
-Updated:         2024-04-02 04:57:49 
+Created:         2024-04-03 03:37:16 
+Updated:         2024-04-03 03:37:16 
 Versioning:      FALSE 
 Meta-generation: 1 
 eTag:            CAE= </code></pre>
@@ -218,7 +218,7 @@ eTag:            CAE= </code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_global_bucket</span>(bucket_name)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Set default bucket name to 'fruition_ensigncy3576'</code></pre>
+<pre><code>Set default bucket name to 'shrink_row1916'</code></pre>
 </div>
 </div>
 <p>I wanted to created a VM as well, which I attempted to do below but it fails. Maybe I’ll try this again in future:</p>
@@ -283,49 +283,49 @@ eTag:            CAE= </code></pre>
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_upload</span>(pandas_stats, <span class="at">name =</span> pandas_filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>ℹ 2024-04-02 17:58:02 &gt; File size detected as  9.6 Kb</code></pre>
+<pre><code>ℹ 2024-04-03 16:37:27 &gt; File size detected as  9.6 Kb</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>==Google Cloud Storage Object==
 Name:                pandas-stats-2023-03-01_2024-03-31.csv 
 Type:                text/csv 
 Size:                9.6 Kb 
-Media URL:           https://www.googleapis.com/download/storage/v1/b/fruition_ensigncy3576/o/pandas-stats-2023-03-01_2024-03-31.csv?generation=1712033882568048&amp;alt=media 
-Download URL:        https://storage.cloud.google.com/fruition_ensigncy3576/pandas-stats-2023-03-01_2024-03-31.csv 
-Public Download URL: https://storage.googleapis.com/fruition_ensigncy3576/pandas-stats-2023-03-01_2024-03-31.csv 
-Bucket:              fruition_ensigncy3576 
-ID:                  fruition_ensigncy3576/pandas-stats-2023-03-01_2024-03-31.csv/1712033882568048 
-MD5 Hash:            G28nrLKwyGodPgGL+C9Zpw== 
+Media URL:           https://www.googleapis.com/download/storage/v1/b/shrink_row1916/o/pandas-stats-2023-03-01_2024-03-31.csv?generation=1712115447597648&amp;alt=media 
+Download URL:        https://storage.cloud.google.com/shrink_row1916/pandas-stats-2023-03-01_2024-03-31.csv 
+Public Download URL: https://storage.googleapis.com/shrink_row1916/pandas-stats-2023-03-01_2024-03-31.csv 
+Bucket:              shrink_row1916 
+ID:                  shrink_row1916/pandas-stats-2023-03-01_2024-03-31.csv/1712115447597648 
+MD5 Hash:            w3XoDSc8ClZ3m3DmaFcvQw== 
 Class:               MULTI_REGIONAL 
-Created:             2024-04-02 04:58:02 
-Updated:             2024-04-02 04:58:02 
-Generation:          1712033882568048 
+Created:             2024-04-03 03:37:27 
+Updated:             2024-04-03 03:37:27 
+Generation:          1712115447597648 
 Meta Generation:     1 
-eTag:                CPDqp5vfooUDEAE= 
-crc32c:              BxPa0g== </code></pre>
+eTag:                CNCUxoiPpYUDEAE= 
+crc32c:              zVNFJQ== </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gcs_upload</span>(polars_stats, <span class="at">name =</span> polars_filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>ℹ 2024-04-02 17:58:02 &gt; File size detected as  8.9 Kb</code></pre>
+<pre><code>ℹ 2024-04-03 16:37:27 &gt; File size detected as  8.9 Kb</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>==Google Cloud Storage Object==
 Name:                polars-stats-2023-03-01_2024-03-31.csv 
 Type:                text/csv 
 Size:                8.9 Kb 
-Media URL:           https://www.googleapis.com/download/storage/v1/b/fruition_ensigncy3576/o/polars-stats-2023-03-01_2024-03-31.csv?generation=1712033882933197&amp;alt=media 
-Download URL:        https://storage.cloud.google.com/fruition_ensigncy3576/polars-stats-2023-03-01_2024-03-31.csv 
-Public Download URL: https://storage.googleapis.com/fruition_ensigncy3576/polars-stats-2023-03-01_2024-03-31.csv 
-Bucket:              fruition_ensigncy3576 
-ID:                  fruition_ensigncy3576/polars-stats-2023-03-01_2024-03-31.csv/1712033882933197 
-MD5 Hash:            glOE+P686r1MJHaawJBNsA== 
+Media URL:           https://www.googleapis.com/download/storage/v1/b/shrink_row1916/o/polars-stats-2023-03-01_2024-03-31.csv?generation=1712115447979578&amp;alt=media 
+Download URL:        https://storage.cloud.google.com/shrink_row1916/polars-stats-2023-03-01_2024-03-31.csv 
+Public Download URL: https://storage.googleapis.com/shrink_row1916/polars-stats-2023-03-01_2024-03-31.csv 
+Bucket:              shrink_row1916 
+ID:                  shrink_row1916/polars-stats-2023-03-01_2024-03-31.csv/1712115447979578 
+MD5 Hash:            LU78UXWTsmvhPj4J41Q+HQ== 
 Class:               MULTI_REGIONAL 
-Created:             2024-04-02 04:58:02 
-Updated:             2024-04-02 04:58:02 
-Generation:          1712033882933197 
+Created:             2024-04-03 03:37:28 
+Updated:             2024-04-03 03:37:28 
+Generation:          1712115447979578 
 Meta Generation:     1 
-eTag:                CM2PvpvfooUDEAE= 
-crc32c:              utyf7g== </code></pre>
+eTag:                CLq83YiPpYUDEAE= 
+crc32c:              wJ6O9A== </code></pre>
 </div>
 </div>
 </section>
@@ -396,7 +396,7 @@ crc32c:              utyf7g== </code></pre>
 </div>
 <p>Now we can create the visual from this data:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>total_downloads <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(total_downloads, <span class="fu">aes</span>(<span class="at">x =</span> library, <span class="at">y =</span> total_downloads)) <span class="sc">+</span></span>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>total_downloads_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(total_downloads, <span class="fu">aes</span>(<span class="at">x =</span> library, <span class="at">y =</span> total_downloads)) <span class="sc">+</span></span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">fill =</span> <span class="st">"#23a1d6"</span>) <span class="sc">+</span></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> scales<span class="sc">::</span><span class="fu">label_number</span>(</span>
 <span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">accuracy =</span> <span class="fl">0.1</span>, <span class="at">scale_cut =</span> scales<span class="sc">::</span><span class="fu">cut_short_scale</span>()</span>
@@ -411,10 +411,10 @@ crc32c:              utyf7g== </code></pre>
 <span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
 <span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"The Polars library has a long way to go before it becomes</span><span class="sc">\n</span><span class="st">as popular as pandas"</span>,</span>
-<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="fu">paste0</span>(<span class="st">"Total downloads according to PyPI, "</span>, <span class="fu">min</span>(downloads<span class="sc">$</span>date), <span class="st">" to date."</span>)</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="fu">paste0</span>(<span class="st">"Total downloads according to PyPI, "</span>, <span class="fu">min</span>(downloads<span class="sc">$</span>date), <span class="st">" to "</span>, <span class="fu">max</span>(downloads<span class="sc">$</span>date), <span class="st">"."</span>)</span>
 <span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>total_downloads</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>total_downloads_plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="pipeline_instructions_files/figure-html/total_downloads_chart-1.png" class="img-fluid" width="672"></p>
 </div>
@@ -455,29 +455,44 @@ crc32c:              utyf7g== </code></pre>
 </div>
 <p>And now let’s plot these monthly values:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(downloads_by_month, <span class="fu">aes</span>(<span class="at">x =</span> month, <span class="at">y =</span> downloads)) <span class="sc">+</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">2.5</span>) <span class="sc">+</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>library, <span class="at">nrow =</span> <span class="dv">2</span>, <span class="at">scales =</span> <span class="st">"free"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>monthly_downloads_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  downloads_by_month, <span class="fu">aes</span>(<span class="at">x =</span> month, <span class="at">y =</span> downloads)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">2.5</span>) <span class="sc">+</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>library, <span class="at">nrow =</span> <span class="dv">2</span>, <span class="at">scales =</span> <span class="st">"free"</span>)</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>monthly_downloads_plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="pipeline_instructions_files/figure-html/downloads_by_month_charts-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>Again, we’ve set the scales to “free” here to clearly see the shape of the downloads data for each Python library, and they tell a similar story: growth nearly every month over the last year, with last month (March 2024) performing especially well. But because the absolute values are very different, it’s hard to tell if they’re growing at the same rate or not.</p>
-<p>To round off this analysis, let’s look at the % change in monthly downloads at the start of the time period to the end of the time period:</p>
+<p>To round off this analysis, let’s look at the annual % change in monthly downloads from March last year to March this year:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>yoy_change <span class="ot">&lt;-</span> downloads_by_month <span class="sc">|&gt;</span> </span>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>yoy_change_tbl <span class="ot">&lt;-</span> downloads_by_month <span class="sc">|&gt;</span> </span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(month) <span class="sc">|&gt;</span> </span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="fu">n</span>()), <span class="at">.by =</span> <span class="st">"library"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">month =</span> <span class="fu">month</span>(month, <span class="at">label =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="st">"month"</span>, <span class="at">values_from =</span> <span class="st">"downloads"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">variance =</span> Mar<span class="sc">-</span>Apr,</span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">perc_change =</span> <span class="fu">round</span>((variance<span class="sc">/</span>Apr)<span class="sc">*</span><span class="dv">100</span>)</span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>yoy_change</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">year =</span> <span class="fu">paste0</span>(<span class="fu">month</span>(month, <span class="at">label =</span> <span class="cn">TRUE</span>), <span class="st">"_"</span>, <span class="fu">year</span>(month)),</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">.keep =</span> <span class="st">"unused"</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="st">"year"</span>, <span class="at">values_from =</span> <span class="st">"downloads"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">variance =</span> Mar_2024 <span class="sc">-</span> Mar_2023,</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">perc_change =</span> <span class="fu">round</span>((variance<span class="sc">/</span>Mar_2023)<span class="sc">*</span><span class="dv">100</span>)</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>yoy_change_tbl</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 5
+  library  Mar_2023  Mar_2024 variance perc_change
+  &lt;chr&gt;       &lt;int&gt;     &lt;int&gt;    &lt;int&gt;       &lt;dbl&gt;
+1 pandas  116966062 206047362 89081300          76
+2 Polars     541848   5253048  4711200         869</code></pre>
 </div>
+</div>
+<p>We can see from this that even though downloads of pandas grew by 76% from March 2023 to March 2024, downloads of Polars grew by a whopping 869% over the same period. Whilst Polars has a long way to go before it’s as popular as pandas, its growth over the last year has been tremendous.</p>
 </section>
 <section id="dashboard" class="level2">
 <h2 class="anchored" data-anchor-id="dashboard">Dashboard</h2>
