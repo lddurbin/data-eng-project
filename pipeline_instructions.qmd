@@ -347,7 +347,7 @@ To round off this analysis, let's look at the annual % change in monthly downloa
 
 ```{r yoy_change_plot}
 
-yoy_change_plot <- downloads_by_month |> 
+yoy_change_tbl <- downloads_by_month |> 
   arrange(month) |> 
   slice(c(1, n()), .by = "library") |> 
   mutate(
@@ -360,10 +360,10 @@ yoy_change_plot <- downloads_by_month |>
     perc_change = round((variance/Mar_2023)*100)
   )
 
-yoy_change_plot
+yoy_change_tbl
 ```
 
-
+We can see from this that even though downloads of pandas grew by `r yoy_change_tbl |> filter(library == "pandas") |> pull(perc_change)`% from March 2023 to March 2024, downloads of Polars grew by a whopping `r yoy_change_tbl |> filter(library == "Polars") |> pull(perc_change)`% over the same period. Whilst Polars has a long way to go before it's as popular as pandas, its growth over the last year has been tremendous.
 
 
 ## Dashboard
